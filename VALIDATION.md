@@ -40,3 +40,7 @@ public/의 매니페스트·Apple Touch PNG·아이콘과 정적 앱 셸 캐시�
 ## GitHub Pages 경로 검증
 
 Expo가 지원하는 app.config.ts에서 /onjeom baseUrl을 적용함. `.cjs` 동적 설정이 무시되어 처음 하위 경로 테스트가 실패한 원인을 확인하고 고침. npm run test:pages는 실제 /onjeom/ 경로의 번들/아이콘/매니페스트, 해당 scope의 서비스 워커, 오프라인 재접속·작업 완료·재실행 저장 **1개 통과**. GitHub 자체 사이트 응답이나 실기기 Safari 설치가 검증됐다는 뜻은 아님. 기본 루트 빌드와 Pages 빌드를 별도로 생성함.
+
+## 원격 업로드 확인
+
+개발 소스 feat/expo-onjeom의 51aa0846e983d97570254bcdbb00d7c9e4076c93과 정적 배포 gh-pages의 0243779b8cad3d785f8a84c0ec53c7a9c92f09c6을 GitHub origin에서 git ls-remote로 확인함. 배포 스크립트 실행 전후 소스 HEAD와 실제 Git 인덱스 SHA256이 같음을 확인함. GitHub Pages 설정 API와 사이트 응답은 실행 환경 네트워크 정책에서 차단되어 활성화/라이브 공개 성공을 확인하지 못함. 저장소 소유자가 Pages의 Source를 Deploy from a branch, Branch를 gh-pages / (root)로 선택해야 함. 예상 사이트는 https://shindongus.github.io/onjeom/ 이며 활성화 전 작동을 보장하지 않음.
