@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "name": "온점.",
+    "slug": "onjeom",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.onjeom.app" },
+    "android": { "package": "com.onjeom.app" },
+    "plugins": ["expo-sqlite", "expo-document-picker"],
+    "web": { "bundler": "metro" }
+  }
+}
