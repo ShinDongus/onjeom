@@ -104,6 +104,14 @@ npm run publish:pages        # Pages용 빌드 후 origin의 gh-pages 브랜치�
 
 현재 환경에서는 저장소 Git 읽기·쓰기는 되지만 `api.github.com` 및 `shindongus.github.io`가 네트워크 정책에서 차단되어 Pages 활성화와 실제 공개 사이트 응답을 확인하지 못했습니다. 필요한 두 도메인을 기존 허용 목록에 보존·추가하는 환경 초안을 저장했습니다. GitHub의 Pages 활성화와 클라우드 환경의 네트워크 설정 게시를 구분하세요. 아이폰은 이 실행 환경의 네트워크 정책을 사용하지 않습니다.
 
+## Pages 자동 설정과 권한 상태
+
+`.github/workflows/configure-pages.yml`은 GitHub에서 Pages를 `gh-pages / (root)`로 설정하고 빌드·실제 HTML·설치 매니페스트까지 확인합니다. 결과는 `.github/pages-status.json`에 기록합니다. 기존 사이트가 없으면 생성도 시도하되 GitHub가 허용한 권한 안에서만 수행합니다.
+
+실행 41661230637은 Pages 생성 단계에서 GitHub의 **403 Resource not accessible by integration**으로 실패했습니다. 따라서 자동 활성화와 공개 사이트 접속 검증은 완료되지 않았습니다. 로컬 네트워크 차단과 별개로 GitHub 자동화 인증에 사이트 생성 권한이 부족하다는 서버 응답을 확인했습니다.
+
+자동 설정을 계속하려면 저장소의 Actions secret `PAGES_TOKEN`에 해당 저장소만 접근하는 GitHub 인증을 안전하게 등록할 수 있습니다. fine-grained PAT의 경우 Pages 읽기/쓰기와 검증에 필요한 Contents 읽기 권한이 필요합니다. GitHub App 인증은 Pages/Administration 관리 권한이 필요합니다. 실제 토큰 값은 채팅·코드·Git 기록에 넣지 않습니다. 인증이 준비되면 워크플로우를 다시 실행해 설정과 실제 주소를 검증해야 합니다. GitHub의 기본 워크플로우 토큰만으로 사이트 생성 권한을 임의로 늘릴 수는 없습니다.
+
 ## Android 테스트 APK 빌드
 
 `npm run apk:android`는 arm64 기기용 로컬 미리보기 APK를 만드는 명령입니다. JDK17, Android API36, build-tools36.0.0, NDK27.1.12297006, CMake3.22.1과 `JAVA_HOME`·`ANDROID_HOME`(또는 `ANDROID_SDK_ROOT`)이 필요합니다. Android CLI 설치 예시는 다음과 같습니다.

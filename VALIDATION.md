@@ -44,3 +44,7 @@ Expo가 지원하는 app.config.ts에서 /onjeom baseUrl을 적용함. `.cjs` �
 ## 원격 업로드 확인
 
 개발 소스 feat/expo-onjeom의 51aa0846e983d97570254bcdbb00d7c9e4076c93과 정적 배포 gh-pages의 0243779b8cad3d785f8a84c0ec53c7a9c92f09c6을 GitHub origin에서 git ls-remote로 확인함. 배포 스크립트 실행 전후 소스 HEAD와 실제 Git 인덱스 SHA256이 같음을 확인함. GitHub Pages 설정 API와 사이트 응답은 실행 환경 네트워크 정책에서 차단되어 활성화/라이브 공개 성공을 확인하지 못함. 저장소 소유자가 Pages의 Source를 Deploy from a branch, Branch를 gh-pages / (root)로 선택해야 함. 예상 사이트는 https://shindongus.github.io/onjeom/ 이며 활성화 전 작동을 보장하지 않음.
+
+## GitHub 내부 자동 설정 실행
+
+GitHub Actions 실행 https://github.com/ShinDongus/onjeom/actions/runs/41661230637 에서 기존 사이트 조회 후 create_settings 단계가 실제 GitHub HTTP403, Resource not accessible by integration으로 실패함. `.github/pages-status.json`의 sourceSha 7cc80eaccdb3a82794bda4f08baa86de9eae08bf와 해당 워크플로우 커밋의 일치를 확인했고 결과 커밋 053d292bf4000289ab49302fb54f6caf675c6906을 수신함. GitHub의 관리 권한 거부를 다른 권한으로 우회하거나 저장소 공개 상태를 바꾸지 않음. Pages는 아직 활성화 완료·실제 공개 접속 검증 상태가 아님. 자동화는 PAGES_TOKEN이 제공되면 그 인증을 사용하도록 준비돼 있으나 값은 코드/결과에 기록하지 않음. 기존 npm test 31개는 통과했고 워크플로우 YAML 구문 검사를 수행함.
