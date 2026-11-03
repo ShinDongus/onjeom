@@ -1,0 +1,106 @@
+name: Configure and verify GitHub Pages
+on:
+  push:
+    branches: [feat/expo-onjeom]
+    paths: [.github/workflows/configure-pages.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+concurrency:
+  group: configure-onjeom-pages
+  cancel-in-progress: false
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Configure Pages and verify the deployed app
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          github-token: ${{ secrets.PAGES_TOKEN || github.token }}
+          script: |
+            const fs = require('node:fs');
+            const { owner, repo } = context.repo;
+            const result = {
+              sourceSha: context.sha,
+              runUrl: `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`,
+              phase: 'configuring',
+              operation: 'get_settings',
+              siteUrl: 'https://shindongus.github.io/onjeom/',
+              verified: false
+            };
+            try {
+              if (`${owner}/${repo}`.toLowerCase() !== 'shindongus/onjeom') throw new Error('Wrong repository');
+              let site;
+              try {
+                site = (await github.request('GET /repos/{owner}/{repo}/pages', { owner, repo })).data;
+              } catch (error) {
+                if (error.status !== 404) throw error;
+                result.operation = 'create_settings';
+                site = (await github.request('POST /repos/{owner}/{repo}/pages', {
+                  owner, repo, source: { branch: 'gh-pages', path: '/' }, build_type: 'legacy'
+                })).data;
+              }
+              if (site.source?.branch !== 'gh-pages' || site.source?.path !== '/' || site.build_type !== 'legacy') {
+                result.operation = 'update_settings';
+                await github.request('PUT /repos/{owner}/{repo}/pages', {
+                  owner, repo, source: { branch: 'gh-pages', path: '/' }, build_type: 'legacy'
+                });
+              }
+              result.configured = true;
+              const expected = (await github.request('GET /repos/{owner}/{repo}/git/ref/{ref}', {
+                owner, repo, ref: 'heads/gh-pages'
+              })).data.object.sha;
+              result.deployedCommit = expected;
+              result.operation = 'request_build';
+              try {
+                await github.request('POST /repos/{owner}/{repo}/pages/builds', { owner, repo });
+              } catch (error) {
+                if (error.status !== 409 && error.status !== 400) throw error;
+              }
+              result.operation = 'await_build';
+              for (let attempt = 0; attempt < 20; attempt++) {
+                await new Promise(resolve => setTimeout(resolve, 15000));
+                const build = (await github.request('GET /repos/{owner}/{repo}/pages/builds/latest', { owner, repo })).data;
+                result.buildStatus = build.status;
+                if (build.status === 'errored') throw new Error('Pages build failed');
+                if (build.status !== 'built' || build.commit !== expected) continue;
+                result.operation = 'verify_site';
+                const response = await fetch(result.siteUrl, { cache: 'no-store' });
+                result.httpStatus = response.status;
+                if (!response.ok) continue;
+                const html = await response.text();
+                if (!html.includes('/onjeom/_expo/') || !html.includes('manifest.webmanifest')) continue;
+                const manifest = await fetch(new URL('manifest.webmanifest', result.siteUrl));
+                if (!manifest.ok || (await manifest.json()).display !== 'standalone') continue;
+                result.verified = true;
+                result.phase = 'ready';
+                break;
+              }
+              if (!result.verified) throw new Error('Pages verification timed out');
+              core.info(`Verified ${result.siteUrl}`);
+            } catch (error) {
+              result.phase = 'failed';
+              result.apiStatus = error.status || null;
+              const safeMessages = ['Resource not accessible by integration', 'Not Found', 'Bad credentials'];
+              result.reason = safeMessages.includes(error.response?.data?.message)
+                ? error.response.data.message
+                : (error.status ? `Pages API returned HTTP ${error.status}` : 'Configuration or verification failed; see the workflow log.');
+              core.setFailed(result.reason);
+            } finally {
+              fs.writeFileSync('.github/pages-status.json', JSON.stringify(result, null, 2) + '\n');
+            }
+      - name: Record the deployment outcome
+        if: always()
+        env:
+          REPORT_BRANCH: ${{ github.ref_name }}
+        run: |
+          if [ ! -f .github/pages-status.json ]; then exit 1; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/pages-status.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'chore: record Pages configuration outcome [skip ci]'
+          git push origin HEAD:"$REPORT_BRANCH"
