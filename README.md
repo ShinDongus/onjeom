@@ -65,7 +65,7 @@ Expo SDK 54와 호환되는 Expo Go 또는 개발 빌드를 사용합니다. 최
 npm test                   # 원본 11개 포함 총 31개 도메인/SQLite/무결성 테스트
 npm run test:original       # 첨부 원본 테스트 11개 그대로 실행
 npm run test:browser        # 원본 기반 PWA 사용자 흐름 4개
-npm run test:mobile         # 실제 React Native UI 사용자 흐름 3개 (웹 번들 자동 생성)
+npm run test:mobile         # 실제 React Native UI·PWA 사용자 흐름 4개 (웹 번들 자동 생성)
 npm run check              # TypeScript
 npm run format:check       # 원본 폴더는 포맷 대상에서 제외
 npm run export             # iOS·Android Hermes 번들, 설치 파일은 아님
@@ -78,6 +78,18 @@ Chromium 기본 경로는 `/usr/bin/chromium`이며 `CHROMIUM_PATH`로 변경할
 기본 12종마다 다른 벡터 형태를 사용하며 시즌 품종과 기존 색상 변이를 같은 렌더러로 표현합니다. 수선화·수국·라벤더·안개꽃 등은 형태가 구별되며 실제 식물 동정용 그림은 아닙니다. 성장 0~3단계는 씨앗·새싹·잎·봉오리로 표시하고 개화는 실제 완료 4회에서만 발생합니다.
 
 계절별 정원에 현재 화분과 최근 꽃을 보여 주고, ‘기억의 정원’과 ‘꽃 도감’을 선택할 수 있습니다. 탭 전환 시 스크롤을 맨 위로 돌립니다. 모달은 작은 화면에서 스크롤할 수 있고 iOS 키보드 회피를 적용했습니다. 개화의 짧은 페이드는 앱과 기기 모션 감소 설정을 따릅니다.
+
+## 아이폰 홈 화면에 설치하기
+
+React Native 웹앱에 설치용 매니페스트, 180px Apple Touch 아이콘, 192/512px 아이콘과 오프라인 앱 셸을 포함했습니다. 앱을 열어 한 번 캐싱한 뒤에는 네트워크가 없어도 기기 내 기록을 읽고 작업을 완료·저장할 수 있습니다. 업데이트는 열린 앱을 강제로 새로고침하지 않고 기존 창을 닫은 뒤 적용합니다.
+
+설치하려면 **HTTPS 공개 주소로 먼저 배포**해야 합니다. `npm run export:preview`로 생성한 `dist-preview/` 전체가 정적 호스팅의 웹 루트에 있어야 합니다. 현재 생성물은 도메인 루트 배포 기준이며 GitHub Pages의 프로젝트 하위 경로는 별도 base path 설정이 필요합니다. 아직 공개 배포 주소나 TestFlight 초대 링크, 서명된 iOS 설치 파일은 없습니다.
+
+배포 주소가 생기면 아이폰 **Safari로 열기 → 공유 → 홈 화면에 추가 → 추가** 순서로 설치합니다. Apple Developer 계정 없이 사용할 수 있는 웹앱 방식입니다. TestFlight/App Store의 네이티브 앱을 원하면 Apple Developer 서명과 별도 배포가 필요합니다.
+
+Safari와 홈 화면 앱 사이의 저장소 공유는 iOS 버전에 따라 다를 수 있으므로 홈 화면에 추가한 뒤 그 앱에서 사용하기를 권장합니다. 기존 기록이 있다면 먼저 JSON 백업을 내보내세요. 저장소/홈 화면 앱 삭제 시 기록을 잃을 수 있어 기기 밖 백업이 필요합니다. 실제 아이폰 설치는 미검증이며 Chromium에서 설치 메타데이터·오프라인 재접속·완료 후 재실행 저장을 검증했습니다.
+
+배포용 압축 파일은 `artifacts/onjeom-iphone-web.zip`에 만들 수 있습니다. 이 ZIP 자체는 아이폰에 직접 설치하는 앱 파일이 아닙니다.
 
 ## Android 테스트 APK 빌드
 

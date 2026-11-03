@@ -32,3 +32,7 @@
 Android 네이티브 프로젝트 생성은 실행함. 첫 APK 빌드는 JDK17 부재로 중단되어 공식 Temurin 17.0.21+9를 SHA256 검증 후 설치함. 이어 Gradle이 앱 이름 `온점.`의 끝 마침표를 프로젝트 이름으로 허용하지 않는 문제를 확인함. Expo 설정 플러그인으로 내부 프로젝트 이름만 `Onjeom`으로 바꾸고 표시 이름은 유지함. 최종 APK 결과는 아래에 별도로 기록함.
 
 최종 Android APK 빌드는 **실패/미생성**: JDK17 설치와 Gradle 프로젝트 이름 수정 후 네이티브 의존성 해석까지 진행했지만 React Native/Hermes AAR의 `repo.reactnative.dev` 리다이렉트가 HTTP403으로 차단됨. `repo.reactnative.dev`·`astro.kasi.re.kr` 허용 초안 저장은 확인됐으며 `requires_publish: true`; 실행 환경 적용/게시는 확인되지 않음. 이 실패는 Hermes 번들 생성이나 React Native 브라우저 테스트 통과와 구분함. 테스트 APK·설치·실기기 실행·스토어 서명은 완료됐다고 주장하지 않음.
+
+## 아이폰 홈 화면 웹앱 준비
+
+public/의 매니페스트·Apple Touch PNG·아이콘과 정적 앱 셸 캐시를 추가함. 실제 React Native 웹 UI 테스트는 기존 3개에 오프라인 설치 셸 1개를 더해 **4개 통과**. 한국어 HTML·iOS 설치 메타데이터·아이콘 응답, 앱 캐싱 후 네트워크를 끊은 재접속, 오프라인 완료와 다시 열기 후 저장을 Chromium에서 확인함. 실제 iPhone/Safari의 홈 화면 추가, HTTPS 공개 호스팅 배포, 서명된 IPA/TestFlight는 미실행. 배포 ZIP은 설치 파일이 아니며 공개 링크는 아직 없음.

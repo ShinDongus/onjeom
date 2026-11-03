@@ -17,6 +17,7 @@ import { StatusBar } from "expo-status-bar";
 import FlowerArt from "./src/components/FlowerArt";
 import GardenScene from "./src/components/GardenScene";
 import Sheet from "./src/components/Sheet";
+import InstallHint from "./src/components/InstallHint";
 import { flowerCardSvg } from "./src/flower-card.mjs";
 import { openPlatformStore, recoverPlatformStore } from "./src/platform-store";
 import { pickBackupText, saveTextFile } from "./src/device-files";
@@ -313,10 +314,9 @@ function Onjeom() {
         </Text>
         <Text style={s.small}>하루를 조금씩, 나의 속도로</Text>
         {Platform.OS === "web" && (
-          <Text style={s.small}>
-            브라우저 미리보기 · 이 브라우저에만 저장돼요.
-          </Text>
+          <Text style={s.small}>웹앱 · 이 브라우저에만 저장돼요.</Text>
         )}
+        <InstallHint />
       </View>
       {error ? (
         <View accessibilityRole="alert" style={s.error}>

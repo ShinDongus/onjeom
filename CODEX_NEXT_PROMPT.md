@@ -17,3 +17,5 @@ React Native UI도 브라우저에서 실행할 수 있습니다. npm run mobile
 Android Gradle은 표시 이름 `온점.`의 마지막 마침표를 프로젝트 이름에 허용하지 않습니다. plugins/withAndroidProjectName.cjs가 내부 프로젝트만 Onjeom으로 설정하므로 제거하지 마세요. APK 빌드에는 JDK17과 API36, build-tools36.0.0, NDK27.1.12297006, CMake3.22.1이 필요합니다. npm run apk:android는 로컬 arm64 미리보기이며 스토어 릴리스가 아닙니다.
 
 APK 빌드 최종 차단은 `repo.reactnative.dev`(React Native/Hermes AAR 리다이렉트) HTTP403입니다. 필요한 네트워크 주소와 KASI 주소만 환경 초안에 저장했지만 게시/런타임 적용은 확인되지 않았습니다. 사용자가 설정을 저장·게시한 뒤 실제 네트워크 정책과 해당 다운로드를 재확인하고 npm run apk:android를 재개하세요. 현재 실제 APK 파일은 없습니다. Gradle/SDK/JDK17은 /workspace/.tools에 준비되어 있으나 환경 복원 시 해당 파일과 환경 변수 활성화를 다시 확인하세요.
+
+아이폰 홈 화면 웹앱 파일은 public/과 scripts/prepare-iphone-web.mjs에 있습니다. export:preview 뒤 설치 메타데이터와 해시 기반 오프라인 셸 캐시를 생성합니다. 배포 루트가 도메인 루트인 HTTPS 정적 호스팅을 사용하세요. 프로젝트 하위 경로에 배포하려면 Expo base URL과 자산 경로를 별도 검증해야 합니다. 공개 배포, 실제 iPhone 설치, TestFlight는 하지 않았으므로 설치 링크가 있다고 말하지 마세요. 배포용 ZIP은 IPA가 아닙니다.
