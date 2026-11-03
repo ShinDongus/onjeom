@@ -2,6 +2,7 @@ import http from "node:http";
 import { readFile } from "node:fs/promises";
 import { resolve, extname, sep } from "node:path";
 const root = resolve("dist-preview");
+const base = process.env.ONJEOM_WEB_BASE_PATH || "";
 const types = {
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript",
@@ -19,10 +20,15 @@ http
       const pathname = decodeURIComponent(
         new URL(req.url, "http://localhost").pathname,
       );
-      const file = resolve(
-        root,
-        "." + (pathname === "/" ? "/index.html" : pathname),
-      );
+      if (base && pathname === base) {
+        res.writeHead(308, { Location: base + "/" });
+        res.end();
+        return;
+      }
+      if (base && !pathname.startsWith(base + "/"))
+        throw Error("Outside app scope");
+      const local = pathname.slice(base.length);
+      const file = resolve(root, "." + (local === "/" ? "/index.html" : local));
       if (!file.startsWith(root + sep)) throw Error("Unknown path");
       const content = await readFile(file);
       res.writeHead(200, {

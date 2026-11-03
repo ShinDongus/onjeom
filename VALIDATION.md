@@ -36,3 +36,7 @@ Android 네이티브 프로젝트 생성은 실행함. 첫 APK 빌드는 JDK17 �
 ## 아이폰 홈 화면 웹앱 준비
 
 public/의 매니페스트·Apple Touch PNG·아이콘과 정적 앱 셸 캐시를 추가함. 실제 React Native 웹 UI 테스트는 기존 3개에 오프라인 설치 셸 1개를 더해 **4개 통과**. 한국어 HTML·iOS 설치 메타데이터·아이콘 응답, 앱 캐싱 후 네트워크를 끊은 재접속, 오프라인 완료와 다시 열기 후 저장을 Chromium에서 확인함. 실제 iPhone/Safari의 홈 화면 추가, HTTPS 공개 호스팅 배포, 서명된 IPA/TestFlight는 미실행. 배포 ZIP은 설치 파일이 아니며 공개 링크는 아직 없음.
+
+## GitHub Pages 경로 검증
+
+Expo가 지원하는 app.config.ts에서 /onjeom baseUrl을 적용함. `.cjs` 동적 설정이 무시되어 처음 하위 경로 테스트가 실패한 원인을 확인하고 고침. npm run test:pages는 실제 /onjeom/ 경로의 번들/아이콘/매니페스트, 해당 scope의 서비스 워커, 오프라인 재접속·작업 완료·재실행 저장 **1개 통과**. GitHub 자체 사이트 응답이나 실기기 Safari 설치가 검증됐다는 뜻은 아님. 기본 루트 빌드와 Pages 빌드를 별도로 생성함.

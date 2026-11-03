@@ -83,13 +83,26 @@ Chromium 기본 경로는 `/usr/bin/chromium`이며 `CHROMIUM_PATH`로 변경할
 
 React Native 웹앱에 설치용 매니페스트, 180px Apple Touch 아이콘, 192/512px 아이콘과 오프라인 앱 셸을 포함했습니다. 앱을 열어 한 번 캐싱한 뒤에는 네트워크가 없어도 기기 내 기록을 읽고 작업을 완료·저장할 수 있습니다. 업데이트는 열린 앱을 강제로 새로고침하지 않고 기존 창을 닫은 뒤 적용합니다.
 
-설치하려면 **HTTPS 공개 주소로 먼저 배포**해야 합니다. `npm run export:preview`로 생성한 `dist-preview/` 전체가 정적 호스팅의 웹 루트에 있어야 합니다. 현재 생성물은 도메인 루트 배포 기준이며 GitHub Pages의 프로젝트 하위 경로는 별도 base path 설정이 필요합니다. 아직 공개 배포 주소나 TestFlight 초대 링크, 서명된 iOS 설치 파일은 없습니다.
+설치하려면 **HTTPS 공개 주소로 먼저 배포**해야 합니다. `npm run export:preview`로 생성한 `dist-preview/` 전체가 정적 호스팅의 웹 루트에 있어야 합니다. `npm run export:preview`는 도메인 루트용이고 `npm run export:pages`는 GitHub Pages `/onjeom/` 경로용입니다. `app.config.ts`가 Expo의 baseUrl을 호스팅 경로에 맞게 설정하며 아이콘·설치 스크립트·오프라인 셸도 같은 경로를 사용합니다. 아직 공개 배포 주소나 TestFlight 초대 링크, 서명된 iOS 설치 파일은 없습니다.
 
 배포 주소가 생기면 아이폰 **Safari로 열기 → 공유 → 홈 화면에 추가 → 추가** 순서로 설치합니다. Apple Developer 계정 없이 사용할 수 있는 웹앱 방식입니다. TestFlight/App Store의 네이티브 앱을 원하면 Apple Developer 서명과 별도 배포가 필요합니다.
 
 Safari와 홈 화면 앱 사이의 저장소 공유는 iOS 버전에 따라 다를 수 있으므로 홈 화면에 추가한 뒤 그 앱에서 사용하기를 권장합니다. 기존 기록이 있다면 먼저 JSON 백업을 내보내세요. 저장소/홈 화면 앱 삭제 시 기록을 잃을 수 있어 기기 밖 백업이 필요합니다. 실제 아이폰 설치는 미검증이며 Chromium에서 설치 메타데이터·오프라인 재접속·완료 후 재실행 저장을 검증했습니다.
 
 배포용 압축 파일은 `artifacts/onjeom-iphone-web.zip`에 만들 수 있습니다. 이 ZIP 자체는 아이폰에 직접 설치하는 앱 파일이 아닙니다.
+
+## GitHub Pages로 아이폰 설치 링크 만들기
+
+```sh
+npm run test:pages           # /onjeom/ 경로의 설치·오프라인 검증
+npm run publish:pages        # Pages용 빌드 후 origin의 gh-pages 브랜치에 업로드
+```
+
+게시 스크립트는 원본 저장소가 ShinDongus/onjeom인지 확인하고 임시 Git 인덱스로 빌드 파일만 배포합니다. 기존 인덱스와 소스 체크아웃을 바꾸지 않으며 배포 브랜치를 강제 푸시하지 않습니다. `.nojekyll`을 포함해 Expo의 `_expo` 자산이 그대로 제공되도록 합니다. 이 명령은 정적 앱을 외부 저장소에 올리는 실제 게시 작업입니다.
+
+최초 한 번은 [저장소 Pages 설정](https://github.com/ShinDongus/onjeom/settings/pages)에서 **Source: Deploy from a branch → Branch: gh-pages / (root) → Save**를 선택해야 합니다. GitHub의 게시 작업이 성공한 후 예상 앱 주소는 **https://shindongus.github.io/onjeom/** 입니다. 이 주소를 아이폰 Safari에서 열고 공유 → 홈 화면에 추가로 설치합니다. 저장소가 비공개인 경우 GitHub 요금제에 따라 Pages 사용이 제한될 수 있으며 저장소 공개 여부를 자동으로 바꾸지는 않습니다.
+
+현재 환경에서는 저장소 Git 읽기·쓰기는 되지만 `api.github.com` 및 `shindongus.github.io`가 네트워크 정책에서 차단되어 Pages 활성화와 실제 공개 사이트 응답을 확인하지 못했습니다. 필요한 두 도메인을 기존 허용 목록에 보존·추가하는 환경 초안을 저장했습니다. GitHub의 Pages 활성화와 클라우드 환경의 네트워크 설정 게시를 구분하세요. 아이폰은 이 실행 환경의 네트워크 정책을 사용하지 않습니다.
 
 ## Android 테스트 APK 빌드
 

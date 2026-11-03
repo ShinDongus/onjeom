@@ -19,3 +19,5 @@ Android Gradle은 표시 이름 `온점.`의 마지막 마침표를 프로젝트
 APK 빌드 최종 차단은 `repo.reactnative.dev`(React Native/Hermes AAR 리다이렉트) HTTP403입니다. 필요한 네트워크 주소와 KASI 주소만 환경 초안에 저장했지만 게시/런타임 적용은 확인되지 않았습니다. 사용자가 설정을 저장·게시한 뒤 실제 네트워크 정책과 해당 다운로드를 재확인하고 npm run apk:android를 재개하세요. 현재 실제 APK 파일은 없습니다. Gradle/SDK/JDK17은 /workspace/.tools에 준비되어 있으나 환경 복원 시 해당 파일과 환경 변수 활성화를 다시 확인하세요.
 
 아이폰 홈 화면 웹앱 파일은 public/과 scripts/prepare-iphone-web.mjs에 있습니다. export:preview 뒤 설치 메타데이터와 해시 기반 오프라인 셸 캐시를 생성합니다. 배포 루트가 도메인 루트인 HTTPS 정적 호스팅을 사용하세요. 프로젝트 하위 경로에 배포하려면 Expo base URL과 자산 경로를 별도 검증해야 합니다. 공개 배포, 실제 iPhone 설치, TestFlight는 하지 않았으므로 설치 링크가 있다고 말하지 마세요. 배포용 ZIP은 IPA가 아닙니다.
+
+GitHub Pages /onjeom/ 경로 지원은 app.config.ts, export:pages, test:pages에 있습니다. publish:pages는 원본 identity를 확인하고 임시 인덱스로 정적 산출물만 gh-pages에 fast-forward 업로드합니다. Git 인덱스/원본 체크아웃을 바꾸지 말고 강제 푸시하지 마세요. Pages 설정 API와 사이트 주소는 클라우드 네트워크에서 차단되어 자동 활성화·실제 공개 주소 확인이 안 됩니다. 사용자가 GitHub Pages 설정에서 gh-pages / (root)를 선택했는지, 환경에 api.github.com·shindongus.github.io가 적용됐는지 구분해 확인하세요. 예상 사이트 URL은 활성화/배포 성공 전에 작동한다고 주장하지 마세요.

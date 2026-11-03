@@ -14,8 +14,8 @@
     "check": "tsc --noEmit",
     "export": "expo export --platform ios --platform android",
     "test:browser": "playwright test",
-    "format": "prettier --write App.tsx index.js src tests web scripts plugins public *.json *.md playwright*.config.mjs",
-    "format:check": "prettier --check App.tsx index.js src tests web scripts plugins public *.json *.md playwright*.config.mjs",
+    "format": "prettier --write App.tsx index.js src tests web scripts plugins public *.json *.md app.config.ts playwright*.config.mjs",
+    "format:check": "prettier --check App.tsx index.js src tests web scripts plugins public *.json *.md app.config.ts playwright*.config.mjs",
     "test:original": "node --test prototype/tests/*.test.mjs",
     "prototype:original": "cd prototype && node server.mjs",
     "build:ios": "expo run:ios",
@@ -24,7 +24,10 @@
     "export:preview": "expo export --platform web --output-dir dist-preview && node scripts/prepare-iphone-web.mjs",
     "test:mobile": "npm run export:preview && playwright test --config playwright.mobile.config.mjs",
     "preview:mobile": "node scripts/serve-mobile-preview.mjs",
-    "apk:android": "node scripts/build-preview-apk.mjs"
+    "apk:android": "node scripts/build-preview-apk.mjs",
+    "export:pages": "node scripts/export-pages.mjs",
+    "test:pages": "npm run export:pages && playwright test --config playwright.pages.config.mjs",
+    "publish:pages": "npm run export:pages && node scripts/publish-pages.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

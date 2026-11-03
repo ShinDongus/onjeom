@@ -41,3 +41,5 @@ await writeFile(join(root, "sw.js"), worker);
 console.log(
   "Prepared iPhone home-screen manifest, icons and offline shell. Public HTTPS hosting is still required.",
 );
+
+await writeFile(join(root, ".nojekyll"), "");
