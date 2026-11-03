@@ -10,12 +10,16 @@
     "ios": "expo start --ios",
     "web": "node scripts/serve-web.mjs",
     "prototype": "node scripts/serve-web.mjs",
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --test tests/*.test.mjs prototype/tests/*.test.mjs",
     "check": "tsc --noEmit",
     "export": "expo export --platform ios --platform android",
     "test:browser": "playwright test",
     "format": "prettier --write App.tsx index.js src tests web scripts *.json *.md playwright.config.mjs",
-    "format:check": "prettier --check App.tsx index.js src tests web scripts *.json *.md playwright.config.mjs"
+    "format:check": "prettier --check App.tsx index.js src tests web scripts *.json *.md playwright.config.mjs",
+    "test:original": "node --test prototype/tests/*.test.mjs",
+    "prototype:original": "cd prototype && node server.mjs",
+    "build:ios": "expo run:ios",
+    "build:android": "expo run:android"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

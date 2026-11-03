@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>온점. — 기록 옮기기</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <style>
+      main {
+        max-width: 650px;
+        margin: auto;
+        padding: 32px;
+      }
+      button,
+      input {
+        margin: 12px 0;
+      }
+      p {
+        line-height: 1.8;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>내 기록을 모바일로</h1>
+      <p>
+        이 브라우저의 원본 온점. 기록을 읽어 모바일용 JSON 백업을 만듭니다. 웹의
+        원본 기록은 변경하지 않습니다. 모바일 설정에서 이 파일을 선택하면 복원할
+        수 있어요.
+      </p>
+      <p>
+        백업에는 개인의 생각과 할 일, 꽃 기록이 포함됩니다. 암호화되지 않으므로
+        안전하게 보관해 주세요.
+      </p>
+      <p id="summary" role="status"></p>
+      <button class="primary-action" id="export">
+        이 브라우저 기록 내보내기</button
+      ><label
+        >기존 백업 파일 확인·변환<input
+          id="file"
+          type="file"
+          accept=".json,application/json" /></label
+      ><button id="download" class="quiet-button" hidden>
+        변환한 백업 저장
+      </button>
+      <p id="error" role="alert"></p>
+      <p>
+        기록이 보이지 않으면 원본을 사용하던 브라우저·호스트·포트에서 이
+        페이지를 열어 주세요. 다른 사이트의 저장소를 읽을 수는 없습니다.
+      </p>
+      <a href="/">정원으로 돌아가기</a>
+    </main>
+    <script type="module" src="/transfer.mjs"></script>
+  </body>
+</html>

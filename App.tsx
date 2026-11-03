@@ -31,26 +31,39 @@ import {
   localDate,
   registerFlower,
   seasonAt,
-} from "./src/logic.mjs";
+  editTask,
+  reorderTask,
+} from "./src/mobile-domain.mjs";
 import { ruleSeparator } from "./src/separator.mjs";
-import { createStore } from "./src/storage.mjs";
+import { createStore, recoverStore } from "./src/storage.mjs";
 
-type Task = { id: string; title: string; status: string };
+type Task = { id: string; title: string; status: string; order: number };
 type Flower = {
   id: string;
-  species: string;
+  speciesId: string;
+  variantId: string;
   color: string;
-  bloomedAt: string;
-  registered: boolean;
-  achievements: string[];
+  createdAt: string;
+  registeredAt: string | null;
+  name: string;
+  quote: string;
+  variantName: string;
+  originTask: string;
+  achievements?: string[];
 };
 type State = {
   version: number;
   tasks: Task[];
   flowers: Flower[];
-  completed: number;
-  settings: { reduceMotion: boolean; plusTest: boolean };
+  completedTotal: number;
+  progress: number;
+  premiumDemo: boolean;
+  settings: { reduceMotion: boolean };
 };
+const flowerDay = (f: Flower) =>
+  f.createdAt.length === 10 ? f.createdAt : localDate(new Date(f.createdAt));
+const achievementText = (f: Flower) =>
+  (f.achievements?.length ? f.achievements : [f.originTask]).join(" · ");
 const palette = {
   ink: "#283e34",
   muted: "#65776b",
@@ -178,6 +191,7 @@ function Onjeom() {
   const [state, setState] = useState<State>(initialState());
   const stateRef = useRef(state);
   const store = useRef<any>(null);
+  const database = useRef<SQLite.SQLiteDatabase | null>(null);
   const busyRef = useRef(false);
   const [ready, setReady] = useState(false),
     [error, setError] = useState(""),
@@ -185,6 +199,9 @@ function Onjeom() {
   const [tab, setTab] = useState("오늘"),
     [thought, setThought] = useState(""),
     [draft, setDraft] = useState<string[] | null>(null);
+  const [manage, setManage] = useState(false),
+    [editingId, setEditingId] = useState<string | null>(null),
+    [editingTitle, setEditingTitle] = useState("");
   const [splitId, setSplitId] = useState<string | null>(null),
     [steps, setSteps] = useState("");
   const [bloom, setBloom] = useState<Flower | null>(null),
@@ -198,10 +215,9 @@ function Onjeom() {
         throw Error(
           "모바일 앱의 SQLite 저장은 iOS·Android에서 사용해 주세요. 브라우저에서는 별도 웹 프로토타입을 실행할 수 있습니다.",
         );
-      if (!store.current)
-        store.current = await createStore(
-          await SQLite.openDatabaseAsync("onjeom.db"),
-        );
+      if (!database.current)
+        database.current = await SQLite.openDatabaseAsync("onjeom.db");
+      if (!store.current) store.current = await createStore(database.current);
       const loaded = await store.current.load();
       stateRef.current = loaded;
       setState(loaded);
@@ -261,8 +277,23 @@ function Onjeom() {
       setBusy(false);
     }
   };
-  const active = state.tasks.filter((t) => t.status === "active");
+  const active = state.tasks
+    .filter((t) => t.status === "active")
+    .sort((a, b) => a.order - b.order);
   const current = active[0];
+  const catalogSpecies = [
+    ...new Map(
+      [
+        ...FLOWERS,
+        ...SEASONAL,
+        ...state.flowers.map((f) => ({
+          id: f.speciesId,
+          name: f.name,
+          quote: f.quote,
+        })),
+      ].map((species) => [species.id, species]),
+    ).values(),
+  ];
   const season = seasonAt(day);
   const backgrounds: Record<string, string> = {
     봄: "#edf2e5",
@@ -272,9 +303,12 @@ function Onjeom() {
   };
   const register = async (f: Flower) => {
     const duplicate = state.flowers.some(
-      (x) => x.registered && x.species === f.species && x.color === f.color,
+      (x) =>
+        x.registeredAt &&
+        x.speciesId === f.speciesId &&
+        x.variantId === f.variantId,
     );
-    if (state.settings.plusTest || duplicate)
+    if (state.premiumDemo || duplicate)
       await commit((s) => registerFlower(s, f.id));
     else setAdFlower(f);
   };
@@ -282,7 +316,23 @@ function Onjeom() {
     if (!current) return;
     const before = stateRef.current.flowers.length;
     const next = await commit((s) => completeTask(s, current.id));
-    if (next && next.flowers.length > before) setBloom(next.flowers.at(-1)!);
+    if (next && next.flowers.length > before) setBloom(next.flowers[0]);
+  };
+  const shareFlower = async (f: Flower) => {
+    try {
+      if (!(await Sharing.isAvailableAsync()))
+        throw Error("이 기기에서는 파일 공유를 사용할 수 없습니다.");
+      const file = new File(Paths.cache, "onjeom-flower-card.txt");
+      file.write(
+        `${f.name} · ${f.variantName}\n“${f.quote}”\n온점. 창작 문구\n${flowerDay(f)} 개화\n${achievementText(f)}`,
+      );
+      await Sharing.shareAsync(file.uri, {
+        mimeType: "text/plain",
+        UTI: "public.plain-text",
+      });
+    } catch (e) {
+      setError(message(e));
+    }
   };
   const backup = async () => {
     if (busyRef.current) return;
@@ -317,7 +367,12 @@ function Onjeom() {
           { text: "취소", style: "cancel" },
           {
             text: "복원",
-            onPress: () => void replaceData(() => store.current.restore(text)),
+            onPress: () =>
+              void replaceData(async () => {
+                if (store.current) return store.current.restore(text);
+                store.current = await recoverStore(database.current, text);
+                return store.current.load();
+              }),
           },
         ],
       );
@@ -339,6 +394,8 @@ function Onjeom() {
       setBloom(null);
       setAdFlower(null);
       setSplitId(null);
+      setManage(false);
+      setEditingId(null);
       setError("");
     } catch (e) {
       setError(message(e));
@@ -362,7 +419,7 @@ function Onjeom() {
           {!ready && (
             <>
               <Button title="다시 불러오기" onPress={() => void load()} />
-              {store.current && (
+              {database.current && (
                 <Button title="백업에서 복구" onPress={() => void restore()} />
               )}
             </>
@@ -412,7 +469,7 @@ function Onjeom() {
                   }
                 />
                 <Text style={s.small}>
-                  규칙 기반 분리 · 줄바꿈과 문장 부호를 기준으로 나눠요.
+                  원본의 한국어 규칙 기반 분리 · AI가 아닙니다.
                 </Text>
                 {draft !== null && (
                   <View style={s.card}>
@@ -442,6 +499,34 @@ function Onjeom() {
                         </Pressable>
                       </View>
                     ))}
+                    <Text style={s.small}>
+                      순서를 바꾸려면 항목을 선택해 이동해 주세요.
+                    </Text>
+                    {draft.map((_, i) => (
+                      <View key={`order-${i}`} style={s.row}>
+                        <Text style={s.small}>{i + 1}번</Text>
+                        <Button
+                          title="위로"
+                          secondary
+                          disabled={i === 0}
+                          onPress={() => {
+                            const next = [...draft];
+                            [next[i - 1], next[i]] = [next[i], next[i - 1]];
+                            setDraft(next);
+                          }}
+                        />
+                        <Button
+                          title="아래로"
+                          secondary
+                          disabled={i === draft.length - 1}
+                          onPress={() => {
+                            const next = [...draft];
+                            [next[i + 1], next[i]] = [next[i], next[i + 1]];
+                            setDraft(next);
+                          }}
+                        />
+                      </View>
+                    ))}
                     <Button
                       title="항목 더 적기"
                       secondary
@@ -452,7 +537,9 @@ function Onjeom() {
                       title="검토한 할 일 추가"
                       disabled={busy || !draft.some((x) => x.trim())}
                       onPress={() =>
-                        void commit((s) => addTasks(s, draft)).then((next) => {
+                        void commit((s) =>
+                          addTasks(s, draft, { original: thought }),
+                        ).then((next) => {
                           if (next) {
                             setDraft(null);
                             setThought("");
@@ -463,10 +550,15 @@ function Onjeom() {
                     />
                   </View>
                 )}
+                <Button
+                  title="할 일 살펴보기·수정"
+                  secondary
+                  onPress={() => setManage(true)}
+                />
                 <View style={s.card}>
                   <Text style={s.subtitle}>오늘의 작은 흔적</Text>
                   <Text style={s.body}>
-                    완료한 일 {state.completed}개 · 피어난 꽃{" "}
+                    완료한 일 {state.completedTotal}개 · 피어난 꽃{" "}
                     {state.flowers.length}송이
                   </Text>
                   <Text style={s.small}>
@@ -480,7 +572,7 @@ function Onjeom() {
                 <Text style={s.eyebrow}>지금은 하나만</Text>
                 <Botanical
                   size={100}
-                  color={state.completed % 4 === 3 ? "#e6c4a7" : "#bbcba6"}
+                  color={state.completedTotal % 4 === 3 ? "#e6c4a7" : "#bbcba6"}
                 />
                 {current ? (
                   <View style={s.card}>
@@ -494,7 +586,7 @@ function Onjeom() {
                       onPress={() => void complete()}
                     />
                     <Button
-                      title="나중에 하기"
+                      title="나중에 하기 · 씨앗에 보관"
                       secondary
                       disabled={busy}
                       onPress={() =>
@@ -508,14 +600,6 @@ function Onjeom() {
                         setSplitId(current.id);
                         setSteps("");
                       }}
-                    />
-                    <Button
-                      title="씨앗 보관함에 두기"
-                      secondary
-                      disabled={busy}
-                      onPress={() =>
-                        void commit((s) => changeTask(s, current.id, "archive"))
-                      }
                     />
                   </View>
                 ) : (
@@ -533,8 +617,8 @@ function Onjeom() {
                   </View>
                 )}
                 <Text style={s.small}>
-                  다음 꽃까지 작은 행동 {4 - (state.completed % 4)}개 · 시간은
-                  재지 않아요.
+                  다음 꽃까지 작은 행동 {4 - (state.completedTotal % 4)}개 ·
+                  시간은 재지 않아요.
                 </Text>
               </>
             )}
@@ -546,7 +630,7 @@ function Onjeom() {
                   <Text style={s.eyebrow}>{season}의 정원</Text>
                   <Text style={s.title}>어느새, 피어났네요.</Text>
                   <View style={s.wrap}>
-                    {state.flowers.slice(-6).map((f) => (
+                    {state.flowers.slice(0, 6).map((f) => (
                       <Botanical
                         key={f.id}
                         size={65}
@@ -566,7 +650,7 @@ function Onjeom() {
                   미등록 꽃도 이곳에 계속 남아요. 도감 등록은 언제든 선택할 수
                   있어요.
                 </Text>
-                {[...state.flowers].reverse().map((f) => {
+                {state.flowers.map((f) => {
                   const info = flowerInfo(f);
                   return (
                     <View style={s.card} key={f.id}>
@@ -575,13 +659,21 @@ function Onjeom() {
                         <View style={{ flex: 1 }}>
                           <Text style={s.subtitle}>{info.name}</Text>
                           <Text style={s.small}>
-                            {info.color.name} · {f.bloomedAt}
+                            {info.color.name} · {flowerDay(f)}
                           </Text>
                           <Text style={s.body}>“{info.meaning}”</Text>
+                          <Text style={s.small}>
+                            온점. 창작 문구 · 전통 꽃말을 뜻하지 않아요.
+                          </Text>
                         </View>
                       </View>
-                      <Text style={s.small}>{f.achievements.join(" · ")}</Text>
-                      {f.registered ? (
+                      <Text style={s.small}>{achievementText(f)}</Text>
+                      <Button
+                        title="꽃말 카드 저장·공유 · 무료"
+                        secondary
+                        onPress={() => void shareFlower(f)}
+                      />
+                      {f.registeredAt ? (
                         <Text style={s.link}>도감에 담았어요</Text>
                       ) : (
                         <Button
@@ -594,12 +686,14 @@ function Onjeom() {
                   );
                 })}
                 <Text style={s.subtitle}>꽃 도감</Text>
+                <Text style={s.small}>꽃말은 온점.의 창작 문구입니다.</Text>
                 <Text style={s.small}>
-                  기본 12종 · 계절의 선물 4종 · 색상별로 기록해요.
+                  원본 기본 12종 · 고정일 시즌 3종 · 추석은 공식 연도별 일정
+                  등록 후 제공해요.
                 </Text>
-                {[...FLOWERS, ...SEASONAL].map((species: any) => {
+                {catalogSpecies.map((species: any) => {
                   const found = state.flowers.filter(
-                    (f) => f.registered && f.species === species.id,
+                    (f) => f.registeredAt && f.speciesId === species.id,
                   );
                   return (
                     <View key={species.id} style={s.card}>
@@ -608,14 +702,14 @@ function Onjeom() {
                       </Text>
                       <Text style={s.small}>
                         {found.length
-                          ? `${species.meaning} · ${new Set(found.map((f) => f.color)).size}가지 색상`
+                          ? `${species.quote} · ${new Set(found.map((f) => f.variantId)).size}가지 색상`
                           : "일상을 정리하다 보면 만날 수 있어요."}
                       </Text>
                       {found.map((f) => (
                         <Text key={f.id} style={s.body}>
-                          {flowerInfo(f).color.name} · {f.bloomedAt}
-                          {"\n"}
-                          {f.achievements.join(" · ")}
+                          {flowerInfo(f).color.name} · {flowerDay(f)} · “
+                          {f.quote}”{"\n"}
+                          {achievementText(f)}
                         </Text>
                       ))}
                     </View>
@@ -631,7 +725,7 @@ function Onjeom() {
                   끝내지 못한 일이 아니라, 다음을 기다리는 씨앗이에요.
                 </Text>
                 {state.tasks
-                  .filter((t) => t.status === "seed")
+                  .filter((t) => t.status === "postponed")
                   .map((t) => (
                     <View key={t.id} style={s.card}>
                       <Text style={s.subtitle}>{t.title}</Text>
@@ -644,7 +738,7 @@ function Onjeom() {
                       />
                     </View>
                   ))}
-                {!state.tasks.some((t) => t.status === "seed") && (
+                {!state.tasks.some((t) => t.status === "postponed") && (
                   <Text style={s.small}>아직 보관한 씨앗이 없어요.</Text>
                 )}
               </>
@@ -675,18 +769,19 @@ function Onjeom() {
                   <Text style={s.subtitle}>수익화 기능 · 테스트 모드</Text>
                   <Text style={s.body}>
                     실제 광고와 결제는 연결되지 않았어요. 비용이 청구되지
-                    않습니다. 희귀 색상 확률은 무료와 PLUS 모두 5%입니다.
+                    않습니다. 개발용 확률은 일반 96.5%, 달빛·오로라 합계 3%,
+                    금빛 0.5%이며 무료·PLUS가 동일합니다.
                   </Text>
                   <View style={s.row}>
                     <Text style={[s.body, { flex: 1 }]}>PLUS 테스트</Text>
                     <Switch
                       accessibilityLabel="PLUS 테스트 모드"
-                      value={state.settings.plusTest}
+                      value={state.premiumDemo}
                       disabled={busy}
                       onValueChange={(v) =>
                         void commit((s) => ({
                           ...s,
-                          settings: { ...s.settings, plusTest: v },
+                          premiumDemo: v,
                         }))
                       }
                     />
@@ -762,6 +857,95 @@ function Onjeom() {
         </>
       )}
       <Modal
+        visible={manage}
+        transparent
+        animationType="none"
+        onRequestClose={() => setManage(false)}
+      >
+        <View style={s.overlay}>
+          <ScrollView contentContainerStyle={s.dialog}>
+            <Text style={s.title}>내가 정하는 한 걸음</Text>
+            {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+            {active.map((t, i) => (
+              <View key={t.id} style={s.card}>
+                <Text style={s.subtitle}>{t.title}</Text>
+                {editingId === t.id ? (
+                  <>
+                    <TextInput
+                      accessibilityLabel="할 일 제목 수정"
+                      value={editingTitle}
+                      onChangeText={setEditingTitle}
+                      maxLength={500}
+                      style={s.input}
+                    />
+                    <Button
+                      title="수정 저장"
+                      disabled={busy}
+                      onPress={() =>
+                        void commit((s) =>
+                          editTask(s, t.id, editingTitle),
+                        ).then((next) => {
+                          if (next) setEditingId(null);
+                        })
+                      }
+                    />
+                  </>
+                ) : (
+                  <Button
+                    title="제목 수정"
+                    secondary
+                    onPress={() => {
+                      setEditingId(t.id);
+                      setEditingTitle(t.title);
+                    }}
+                  />
+                )}
+                <View style={s.row}>
+                  <Button
+                    title="위로"
+                    secondary
+                    disabled={busy || i === 0}
+                    onPress={() => void commit((s) => reorderTask(s, t.id, -1))}
+                  />
+                  <Button
+                    title="아래로"
+                    secondary
+                    disabled={busy || i === active.length - 1}
+                    onPress={() => void commit((s) => reorderTask(s, t.id, 1))}
+                  />
+                </View>
+                <Button
+                  title="할 일 삭제"
+                  secondary
+                  disabled={busy}
+                  onPress={() =>
+                    Alert.alert(
+                      "할 일을 삭제할까요?",
+                      "다시 하고 싶은 일은 씨앗 보관함에 둘 수도 있어요.",
+                      [
+                        { text: "취소", style: "cancel" },
+                        {
+                          text: "삭제",
+                          style: "destructive",
+                          onPress: () =>
+                            void commit((s) => changeTask(s, t.id, "delete")),
+                        },
+                      ],
+                    )
+                  }
+                />
+              </View>
+            ))}
+            {!active.length && <Text style={s.body}>지금 할 일은 없어요.</Text>}
+            <Button
+              title="돌아가기"
+              secondary
+              onPress={() => setManage(false)}
+            />
+          </ScrollView>
+        </View>
+      </Modal>
+      <Modal
         visible={splitId !== null}
         transparent
         animationType="none"
@@ -809,6 +993,7 @@ function Onjeom() {
       >
         <View style={s.overlay}>
           <Animated.View style={[s.dialog, { opacity: fade }]}>
+            {error ? <Text accessibilityRole="alert">{error}</Text> : null}
             {bloom && (
               <>
                 <Text style={s.eyebrow}>당신의 작은 행동 끝에</Text>
@@ -818,10 +1003,18 @@ function Onjeom() {
                 </Text>
                 <Text style={s.body}>“{flowerInfo(bloom).meaning}”</Text>
                 <Text style={s.small}>
-                  {bloom.bloomedAt} · {flowerInfo(bloom).color.name}
-                  {"\n"}
-                  {bloom.achievements.join(" · ")}
+                  온점. 창작 문구 · 전통 꽃말을 뜻하지 않아요.
                 </Text>
+                <Text style={s.small}>
+                  {flowerDay(bloom)} · {flowerInfo(bloom).color.name}
+                  {"\n"}
+                  {achievementText(bloom)}
+                </Text>
+                <Button
+                  title="꽃말 카드 저장·공유 · 무료"
+                  secondary
+                  onPress={() => void shareFlower(bloom)}
+                />
                 <Button
                   title="기억의 정원에서 만나기"
                   onPress={() => {

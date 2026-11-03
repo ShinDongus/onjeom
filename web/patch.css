@@ -1,0 +1,21 @@
+body.reduce-motion *,
+body.reduce-motion *::before,
+body.reduce-motion *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+.task-row {
+  flex-wrap: wrap;
+}
+.task-row button {
+  padding: 10px;
+  min-height: 44px;
+}
+.modal-sheet label {
+  display: block;
+  margin: 12px 0;
+}
+.modal-sheet button:disabled {
+  opacity: 0.4;
+}

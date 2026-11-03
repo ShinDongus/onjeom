@@ -1,0 +1,23 @@
+{
+  "archive": "onjeom-codex-ready.zip",
+  "root": "onjeom-codex-starter",
+  "sha256": {
+    "README.md": "0a7716aebb82afd3117f13da2ae316a208ec84b1d6854da813a1e0eb6eac4f43",
+    "sw.js": "ace3fd88494651a5e3071deac49feec19375c55ea65d5b0b88c30a3a1111e64c",
+    "package.json": "e4c48914f852feb688bcf7c498678489f8f26ab14f5daea63d6752d23b9cb78a",
+    ".gitignore": "e89d32b83b8e6866202d2d7ed1002fe669f08abb9fc09a9f13f3f803bdccf2a5",
+    "index.html": "916237cad11cbd212b77ec4d66d44dc5494fc297127ac94d677865cc0f9a79e1",
+    "manifest.webmanifest": "3ed3f16966247c273f36df724bb560478e930e922381bda361f179ead8875a5b",
+    "CODEX_TASK.md": "f0df6704806a491c2e70d73ad316a1da1f3e564727f7317117cca3c0e8b7240e",
+    "styles.css": "50876d602861a9ef927942248ec0689efeddd537a4d06940c3438c6494fc285e",
+    "GITHUB_SETUP.md": "3b9714fc27e4099f818c64edddb7f2ad49085f8cd3c226fdfba32328ada4f09f",
+    "AGENTS.md": "8d3b0cca8c90b48b7f3160460b8e0f03d5f0d9db2eed62617f674affe144d127",
+    "CODEX_NEXT_PROMPT.md": "7981312eeee5b0e1fc1584b309976c64706acd04ec4cfcc07e304ebac7465810",
+    "server.mjs": "50e6b09fa21467b36f8f41e77efde8804c0cb4457f943b1b75bcc818a10d57e8",
+    "src/app.mjs": "44ce1a4b07cedd632c3ae3fcf186b22254b623b8d730f38ff71044ba88682ff9",
+    "src/logic.mjs": "ba39ce6ed6e89170326c1ad71abc4591e16954a05cedc689dcba3a7a4309a1b2",
+    "tests/ui-smoke.test.mjs": "fdadb7761a85503c6d7d57468f4d845291d5c1f0856730320564be108b67a573",
+    "tests/logic.test.mjs": "6ceab9ca84ef8df8996be95233890f4e7653158e09f7e9c65a7407ba4c229d3f",
+    "assets/icon.svg": "237ccb0eaa1b487d8f56ff7592c519d68588d03822aa72add28ae9e1b9258594"
+  }
+}

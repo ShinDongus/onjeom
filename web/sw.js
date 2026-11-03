@@ -1,16 +1,27 @@
-const CACHE = "onjeom-shell-v1";
-const ASSETS = [
-  "/web/",
-  "/web/index.html",
-  "/web/style.css",
-  "/web/app.mjs",
-  "/web/icon.svg",
-  "/web/manifest.json",
+const CACHE = "onjeom-original-integrated-v1";
+const CORE = [
+  "/",
+  "/index.html",
+  "/styles.css",
+  "/patch.css",
+  "/src/app.mjs",
   "/src/logic.mjs",
-  "/src/separator.mjs",
+  "/src/mobile-domain.mjs",
+  "/src/legacy-mobile.mjs",
+  "/src/seasonal.mjs",
+  "/src/season-calendar.mjs",
+  "/assets/icon.svg",
+  "/manifest.webmanifest",
+  "/transfer/",
+  "/transfer.mjs",
 ];
 self.addEventListener("install", (e) =>
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS))),
+  e.waitUntil(
+    caches
+      .open(CACHE)
+      .then((c) => c.addAll(CORE))
+      .then(() => self.skipWaiting()),
+  ),
 );
 self.addEventListener("activate", (e) =>
   e.waitUntil(
@@ -19,10 +30,11 @@ self.addEventListener("activate", (e) =>
       .then((keys) =>
         Promise.all(
           keys
-            .filter((k) => k.startsWith("onjeom-shell-") && k !== CACHE)
+            .filter((k) => k.startsWith("onjeom-") && k !== CACHE)
             .map((k) => caches.delete(k)),
         ),
-      ),
+      )
+      .then(() => self.clients.claim()),
   ),
 );
 self.addEventListener("fetch", (e) => {
@@ -31,15 +43,5 @@ self.addEventListener("fetch", (e) => {
     new URL(e.request.url).origin !== self.location.origin
   )
     return;
-  e.respondWith(
-    fetch(e.request)
-      .then((r) => {
-        if (r.ok && ASSETS.includes(new URL(e.request.url).pathname)) {
-          const clone = r.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, clone));
-        }
-        return r;
-      })
-      .catch(() => caches.match(e.request)),
-  );
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
