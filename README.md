@@ -16,9 +16,12 @@ npm run android            # Android 에뮬레이터/연결 기기에서 열기
 npm run build:ios          # 네이티브 개발 빌드 생성·실행 (macOS/Xcode 필요)
 npm run build:android      # 네이티브 개발 빌드 생성·실행 (Android SDK 필요)
 npm run web                # 통합한 원본 기반 웹, 기본 포트 4173
+npm run mobile:web         # 실제 React Native UI의 브라우저 미리보기
+npm run export:preview     # React Native 웹 정적 번들 생성
+npm run preview:mobile     # 생성한 미리보기 실행, 기본 포트 4174
 ```
 
-Expo SDK 54와 호환되는 Expo Go 또는 개발 빌드를 사용합니다. 최신 Expo Go의 SDK 지원 범위와는 다를 수 있습니다. 기존 검증된 SDK 54를 유지했으며 이번 통합에서 최신 SDK 업그레이드나 스토어 배포는 수행하지 않았습니다. 모바일 SQLite는 iOS·Android 전용이고, 브라우저에서는 `npm run web`을 사용합니다.
+Expo SDK 54와 호환되는 Expo Go 또는 개발 빌드를 사용합니다. 최신 Expo Go의 SDK 지원 범위와는 다를 수 있습니다. 기존 검증된 SDK 54를 유지했으며 이번 통합에서 최신 SDK 업그레이드나 스토어 배포는 수행하지 않았습니다. 모바일 SQLite는 iOS·Android 전용입니다. `npm run web`은 원본 기반 PWA이고 `npm run mobile:web`은 **같은 App.tsx를 실행하는 React Native 브라우저 미리보기**입니다. 미리보기는 별도 IndexedDB에 저장하고 파일 다운로드/선택을 브라우저 API로 처리합니다. 원본 PWA·브라우저 미리보기·실기기 데이터는 자동 동기화되지 않으며 JSON 백업으로 옮깁니다.
 
 `npm run prototype:original`은 **수정 없는 보존본**을 실행합니다. 원본에는 모달의 인라인 `stopPropagation()` 때문에 내부 버튼이 문서 이벤트 처리기로 전달되지 않는 문제가 있습니다. 기본 `npm run web`은 이 문제를 고친 실행용 `web/app.mjs`를 사용합니다. 원본 CSS·일러스트·도메인은 유지하고 검토·수정·순서 변경과 백업 전환을 보완했습니다. 두 서버의 기본 포트가 같으므로 동시에 실행하지 마세요.
 
@@ -29,7 +32,7 @@ Expo SDK 54와 호환되는 Expo Go 또는 개발 빌드를 사용합니다. 최
 - **4개 완료 → 1송이 개화**: 원본 12종과 창작 문구를 유지합니다. 개발용 확률은 일반 96.5%, 달빛·오로라 합계 3%, 금빛 0.5%. 무료와 PLUS가 같은 추첨을 사용합니다.
 - **시즌**: 원본대로 크리스마스 12/18–26, 할로윈 10/24–11/1, 새해 12/30–1/3. 기간 중 시즌 품종 확률은 24%이며, 항상 시즌 품종만 나오는 구조가 아닙니다. 날짜는 원본처럼 기기 현지 날짜를 사용합니다.
 - **추석은 아직 비활성**: `src/season-calendar.mjs`에 출처가 검토된 연도별 공식 양력 일정이 있을 때만 활성화됩니다. 한국천문연구원 접근이 현재 네트워크 정책에서 HTTP 403으로 차단되어 공식 데이터를 검증하지 못했습니다. 음력 추정이나 임의 날짜를 넣지 않았습니다. 테스트의 가상 일정은 실제 운영 데이터가 아닙니다.
-- **꽃말은 온점. 창작 문구**: 전통 꽃말/식물학적 사실로 표시하지 않습니다. 등록 전에도 열람·텍스트 카드 저장/공유가 무료입니다. 웹은 무료 카드 문구 복사를 제공합니다. 모바일 네이티브 공유는 실기기에서 추가 검증해야 합니다.
+- **꽃말은 온점. 창작 문구**: 전통 꽃말/식물학적 사실로 표시하지 않습니다. 등록 전에도 열람과 **일러스트가 포함된 SVG 꽃말 카드** 저장/공유가 무료입니다. SVG는 글자와 꽃 그림을 함께 담은 파일이며 외부 리소스를 불러오지 않습니다. 웹은 무료 카드 문구 복사를 제공합니다. 모바일 네이티브 공유는 실기기에서 추가 검증해야 합니다.
 - **정원·도감**: 계절 배경과 모든 꽃의 기억의 정원, 품종+색상별 도감, 개화일·완료 행동 기록. 미등록 꽃도 계속 보관합니다. 새 꽃에는 최근 네 완료 행동을 기록하고, 원본에서 가져온 꽃에는 원래 있던 `originTask`만 보여 줍니다. 없는 과거 기록을 만들어 내지 않습니다.
 
 ## 광고·PLUS·AI 경계
@@ -61,16 +64,38 @@ Expo SDK 54와 호환되는 Expo Go 또는 개발 빌드를 사용합니다. 최
 ```sh
 npm test                   # 원본 11개 포함 총 31개 도메인/SQLite/무결성 테스트
 npm run test:original       # 첨부 원본 테스트 11개 그대로 실행
-npm run test:browser        # Chromium 사용자 흐름 4개
+npm run test:browser        # 원본 기반 PWA 사용자 흐름 4개
+npm run test:mobile         # 실제 React Native UI 사용자 흐름 3개 (웹 번들 자동 생성)
 npm run check              # TypeScript
 npm run format:check       # 원본 폴더는 포맷 대상에서 제외
 npm run export             # iOS·Android Hermes 번들, 설치 파일은 아님
 ```
 
-Chromium 기본 경로는 `/usr/bin/chromium`이며 `CHROMIUM_PATH`로 변경할 수 있습니다. 자세한 실행 결과와 미실행 항목은 `VALIDATION.md`를 확인하세요. 네이티브 런타임·파일 공유/선택·접근성·스토어 배포는 실기기 QA가 남아 있습니다. Node SQLite 파일 재오픈 검증을 실제 모바일 재부팅 검증으로 간주하지 않습니다.
+Chromium 기본 경로는 `/usr/bin/chromium`이며 `CHROMIUM_PATH`로 변경할 수 있습니다. React Native UI 테스트는 390×844 및 320×640에서 생각 검토→개화→무료 카드→취소/등록→재접속→씨앗→백업·삭제·복원을 실제 화면 조작으로 확인합니다. 모션 감소, 손상 백업 거절, 원본 웹 JSON 복원·삭제 취소도 검증합니다. 스크린샷은 `artifacts/mobile-today.png`, `mobile-bloom.png`, `mobile-garden.png`에 생성합니다. 자세한 실행 결과와 미실행 항목은 `VALIDATION.md`를 확인하세요. React Native 브라우저 검증은 네이티브 런타임 검증을 대신하지 않습니다. 실기기의 파일 공유/선택·접근성·스토어 배포는 QA가 남아 있습니다. Node SQLite 파일 재오픈 검증을 실제 모바일 재부팅 검증으로 간주하지 않습니다.
+
+## 모바일 화면과 일러스트
+
+기본 12종마다 다른 벡터 형태를 사용하며 시즌 품종과 기존 색상 변이를 같은 렌더러로 표현합니다. 수선화·수국·라벤더·안개꽃 등은 형태가 구별되며 실제 식물 동정용 그림은 아닙니다. 성장 0~3단계는 씨앗·새싹·잎·봉오리로 표시하고 개화는 실제 완료 4회에서만 발생합니다.
+
+계절별 정원에 현재 화분과 최근 꽃을 보여 주고, ‘기억의 정원’과 ‘꽃 도감’을 선택할 수 있습니다. 탭 전환 시 스크롤을 맨 위로 돌립니다. 모달은 작은 화면에서 스크롤할 수 있고 iOS 키보드 회피를 적용했습니다. 개화의 짧은 페이드는 앱과 기기 모션 감소 설정을 따릅니다.
+
+## Android 테스트 APK 빌드
+
+`npm run apk:android`는 arm64 기기용 로컬 미리보기 APK를 만드는 명령입니다. JDK17, Android API36, build-tools36.0.0, NDK27.1.12297006, CMake3.22.1과 `JAVA_HOME`·`ANDROID_HOME`(또는 `ANDROID_SDK_ROOT`)이 필요합니다. Android CLI 설치 예시는 다음과 같습니다.
+
+```sh
+android --no-metrics sdk install platforms/android-36 build-tools/36.0.0 platform-tools ndk/27.1.12297006 cmake/3.22.1
+npm run apk:android
+```
+
+스크립트는 Expo prebuild 후 arm64 Release 변형을 컴파일하고 APK 서명을 검증합니다. 기본 생성 프로젝트의 디버그 키로 서명하는 **테스트용 빌드**이며 스토어 배포용 서명·등록을 수행하지 않습니다. 성공 시 `artifacts/onjeom-preview-arm64.apk`와 SHA256 파일을 만듭니다. Gradle8.14.3의 공식 SHA256을 검증하며, 네트워크 프록시가 있으면 기존 `HTTPS_PROXY`/`HTTP_PROXY`의 경로를 사용합니다. 별도 CA가 필요한 환경에서는 신뢰할 수 있는 Java truststore 경로를 `ONJEOM_GRADLE_TRUST_STORE`로 지정할 수 있습니다. TLS 검증을 끄지 않습니다.
+
+**현재 APK는 생성되지 않았습니다.** 이 환경에서 SDK와 JDK를 설치하고 실제 네이티브 빌드를 시도했지만, Maven의 React Native 바이너리 리다이렉트 주소 `repo.reactnative.dev`가 네트워크 정책에서 403으로 차단됐습니다. 해당 주소와 공식 추석 자료용 `astro.kasi.re.kr`만 허용하는 환경 설정 초안을 저장했습니다. 환경 설정에서 변경을 검토·저장하고 환경을 게시한 뒤 빌드를 다시 실행해야 합니다. 초안 저장만으로 현재 실행 환경의 네트워크가 바뀌지는 않습니다.
+
+표시 이름 `온점.`은 유지하면서 Gradle 내부 프로젝트 이름만 `Onjeom`으로 정하는 `plugins/withAndroidProjectName.cjs`를 적용했습니다. 마침표로 끝나는 Gradle 프로젝트 이름 때문에 네이티브 빌드가 실패하는 문제를 해결하는 설정이며 prebuild 때 재적용됩니다. 생성된 `android/`와 빌드 결과는 Git에 넣지 않습니다.
 
 ## 주요 파일과 남은 작업
 
-`prototype/`는 수정 없는 첨부 원본, `src/logic.mjs`는 그 도메인을 재노출하는 공유 진입점, `src/mobile-domain.mjs`는 검토/스키마/백업 확장입니다. `src/legacy-mobile.mjs`는 이전 모바일 데이터 읽기 전용이고 새 작업 규칙으로 사용하지 않습니다. `App.tsx`는 Expo UI, `src/storage.mjs`는 SQLite, `web/`는 원본 기반 실행 UI·전환 도구입니다.
+`prototype/`는 수정 없는 첨부 원본, `src/logic.mjs`는 그 도메인을 재노출하는 공유 진입점, `src/mobile-domain.mjs`는 검토/스키마/백업 확장입니다. `src/legacy-mobile.mjs`는 이전 모바일 데이터 읽기 전용이고 새 작업 규칙으로 사용하지 않습니다. `App.tsx`는 Expo UI, `src/storage.mjs`는 SQLite, `web/`는 원본 기반 실행 UI·전환 도구입니다. `src/components/`는 정원·꽃·공통 시트, `flower-art.mjs`/`flower-card.mjs`는 벡터 그림과 무료 카드, `platform-store`/`device-files`의 플랫폼별 파일은 SQLite·공유와 브라우저 미리보기의 저장·다운로드를 연결합니다.
 
-남은 작업: 공식 추석 일정 검증·등록, 실기기 QA와 큰 글꼴/VoiceOver/TalkBack, 품종별 일러스트(현재 공통 모티프), 긴 기록 목록 가상화, 최신 Expo SDK 업그레이드/개발 빌드 호환성 확인, 실제 광고/결제 서버 검증과 스토어 설정. 원본 아카이브의 설명은 당시 상태를 기록하므로 현재 기능은 이 README를 기준으로 봅니다.
+남은 작업: 공식 추석 일정 검증·등록, 실기기 QA와 큰 글꼴/VoiceOver/TalkBack, 긴 기록 목록 가상화, 최신 Expo SDK 업그레이드/개발 빌드 호환성 확인, 실제 광고/결제 서버 검증과 스토어 설정. 원본 아카이브의 설명은 당시 상태를 기록하므로 현재 기능은 이 README를 기준으로 봅니다.

@@ -14,12 +14,17 @@
     "check": "tsc --noEmit",
     "export": "expo export --platform ios --platform android",
     "test:browser": "playwright test",
-    "format": "prettier --write App.tsx index.js src tests web scripts *.json *.md playwright.config.mjs",
-    "format:check": "prettier --check App.tsx index.js src tests web scripts *.json *.md playwright.config.mjs",
+    "format": "prettier --write App.tsx index.js src tests web scripts plugins *.json *.md playwright*.config.mjs",
+    "format:check": "prettier --check App.tsx index.js src tests web scripts plugins *.json *.md playwright*.config.mjs",
     "test:original": "node --test prototype/tests/*.test.mjs",
     "prototype:original": "cd prototype && node server.mjs",
     "build:ios": "expo run:ios",
-    "build:android": "expo run:android"
+    "build:android": "expo run:android",
+    "mobile:web": "expo start --web",
+    "export:preview": "expo export --platform web --output-dir dist-preview",
+    "test:mobile": "npm run export:preview && playwright test --config playwright.mobile.config.mjs",
+    "preview:mobile": "node scripts/serve-mobile-preview.mjs",
+    "apk:android": "node scripts/build-preview-apk.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -33,6 +38,7 @@
     "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-safe-area-context": "~5.6.0",
+    "react-native-svg": "15.12.1",
     "react-native-web": "~0.21.0"
   },
   "devDependencies": {

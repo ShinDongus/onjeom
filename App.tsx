@@ -1,10 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   AccessibilityInfo,
-  Alert,
   Animated,
   AppState,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -16,10 +14,12 @@ import {
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import * as SQLite from "expo-sqlite";
-import { File, Paths } from "expo-file-system";
-import * as Sharing from "expo-sharing";
-import * as DocumentPicker from "expo-document-picker";
+import FlowerArt from "./src/components/FlowerArt";
+import GardenScene from "./src/components/GardenScene";
+import Sheet from "./src/components/Sheet";
+import { flowerCardSvg } from "./src/flower-card.mjs";
+import { openPlatformStore, recoverPlatformStore } from "./src/platform-store";
+import { pickBackupText, saveTextFile } from "./src/device-files";
 import {
   addTasks,
   changeTask,
@@ -35,7 +35,6 @@ import {
   reorderTask,
 } from "./src/mobile-domain.mjs";
 import { ruleSeparator } from "./src/separator.mjs";
-import { createStore, recoverStore } from "./src/storage.mjs";
 
 type Task = { id: string; title: string; status: string; order: number };
 type Flower = {
@@ -60,6 +59,8 @@ type State = {
   premiumDemo: boolean;
   settings: { reduceMotion: boolean };
 };
+const subject = (name: string) =>
+  name + ((name.charCodeAt(name.length - 1) - 0xac00) % 28 === 0 ? "가" : "이");
 const flowerDay = (f: Flower) =>
   f.createdAt.length === 10 ? f.createdAt : localDate(new Date(f.createdAt));
 const achievementText = (f: Flower) =>
@@ -101,85 +102,6 @@ function Button({
     </Pressable>
   );
 }
-function Botanical({
-  color = "#efcf97",
-  size = 100,
-}: {
-  color?: string;
-  size?: number;
-}) {
-  return (
-    <View
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={{ width: size, height: size * 1.3, alignSelf: "center" }}
-    >
-      <View
-        style={{
-          position: "absolute",
-          left: size * 0.48,
-          top: size * 0.35,
-          width: 3,
-          height: size * 0.9,
-          backgroundColor: "#688368",
-          borderRadius: 3,
-        }}
-      />
-      <View
-        style={{
-          position: "absolute",
-          left: size * 0.5,
-          top: size * 0.82,
-          width: size * 0.3,
-          height: size * 0.14,
-          backgroundColor: "#8fa687",
-          borderTopRightRadius: 30,
-          borderBottomLeftRadius: 30,
-          transform: [{ rotate: "-28deg" }],
-        }}
-      />
-      <View
-        style={{
-          position: "absolute",
-          left: size * 0.22,
-          top: size * 0.97,
-          width: size * 0.28,
-          height: size * 0.13,
-          backgroundColor: "#a7b89a",
-          borderTopLeftRadius: 30,
-          borderBottomRightRadius: 30,
-          transform: [{ rotate: "25deg" }],
-        }}
-      />
-      {[0, 60, 120, 180, 240, 300].map((a) => (
-        <View
-          key={a}
-          style={{
-            position: "absolute",
-            left: size * 0.33 + Math.cos((a * Math.PI) / 180) * size * 0.21,
-            top: size * 0.23 + Math.sin((a * Math.PI) / 180) * size * 0.21,
-            width: size * 0.35,
-            height: size * 0.35,
-            borderRadius: size,
-            backgroundColor: color,
-            opacity: 0.94,
-          }}
-        />
-      ))}
-      <View
-        style={{
-          position: "absolute",
-          left: size * 0.4,
-          top: size * 0.3,
-          width: size * 0.22,
-          height: size * 0.22,
-          borderRadius: size,
-          backgroundColor: "#b18a4a",
-        }}
-      />
-    </View>
-  );
-}
 export default function App() {
   return (
     <SafeAreaProvider>
@@ -190,8 +112,8 @@ export default function App() {
 function Onjeom() {
   const [state, setState] = useState<State>(initialState());
   const stateRef = useRef(state);
+  const scroll = useRef<ScrollView>(null);
   const store = useRef<any>(null);
-  const database = useRef<SQLite.SQLiteDatabase | null>(null);
   const busyRef = useRef(false);
   const [ready, setReady] = useState(false),
     [error, setError] = useState(""),
@@ -199,6 +121,13 @@ function Onjeom() {
   const [tab, setTab] = useState("오늘"),
     [thought, setThought] = useState(""),
     [draft, setDraft] = useState<string[] | null>(null);
+  const [confirmation, setConfirmation] = useState<{
+    title: string;
+    body: string;
+    label: string;
+    action: () => void;
+  } | null>(null);
+  const [gardenView, setGardenView] = useState("기억");
   const [manage, setManage] = useState(false),
     [editingId, setEditingId] = useState<string | null>(null),
     [editingTitle, setEditingTitle] = useState("");
@@ -211,13 +140,7 @@ function Onjeom() {
   const fade = useRef(new Animated.Value(1)).current;
   const load = async () => {
     try {
-      if (Platform.OS === "web")
-        throw Error(
-          "모바일 앱의 SQLite 저장은 iOS·Android에서 사용해 주세요. 브라우저에서는 별도 웹 프로토타입을 실행할 수 있습니다.",
-        );
-      if (!database.current)
-        database.current = await SQLite.openDatabaseAsync("onjeom.db");
-      if (!store.current) store.current = await createStore(database.current);
+      if (!store.current) store.current = await openPlatformStore();
       const loaded = await store.current.load();
       stateRef.current = loaded;
       setState(loaded);
@@ -242,6 +165,9 @@ function Onjeom() {
       app.remove();
     };
   }, []);
+  useEffect(() => {
+    scroll.current?.scrollTo({ y: 0, animated: false });
+  }, [tab]);
   useEffect(() => {
     if (!bloom || state.settings.reduceMotion || systemReduce) {
       fade.setValue(1);
@@ -295,12 +221,6 @@ function Onjeom() {
     ).values(),
   ];
   const season = seasonAt(day);
-  const backgrounds: Record<string, string> = {
-    봄: "#edf2e5",
-    여름: "#e4eee7",
-    가을: "#f2e8d7",
-    겨울: "#edf0f2",
-  };
   const register = async (f: Flower) => {
     const duplicate = state.flowers.some(
       (x) =>
@@ -320,16 +240,11 @@ function Onjeom() {
   };
   const shareFlower = async (f: Flower) => {
     try {
-      if (!(await Sharing.isAvailableAsync()))
-        throw Error("이 기기에서는 파일 공유를 사용할 수 없습니다.");
-      const file = new File(Paths.cache, "onjeom-flower-card.txt");
-      file.write(
-        `${f.name} · ${f.variantName}\n“${f.quote}”\n온점. 창작 문구\n${flowerDay(f)} 개화\n${achievementText(f)}`,
+      await saveTextFile(
+        "onjeom-flower-card.svg",
+        flowerCardSvg(f, flowerDay(f)),
+        "image/svg+xml",
       );
-      await Sharing.shareAsync(file.uri, {
-        mimeType: "text/plain",
-        UTI: "public.plain-text",
-      });
     } catch (e) {
       setError(message(e));
     }
@@ -337,45 +252,30 @@ function Onjeom() {
   const backup = async () => {
     if (busyRef.current) return;
     try {
-      const text = await store.current.backup();
-      if (!(await Sharing.isAvailableAsync()))
-        throw Error("이 기기에서는 파일 공유를 사용할 수 없습니다.");
-      const file = new File(Paths.cache, "onjeom-backup.json");
-      file.write(text);
-      await Sharing.shareAsync(file.uri, {
-        mimeType: "application/json",
-        UTI: "public.json",
-      });
+      await saveTextFile(
+        "onjeom-backup.json",
+        await store.current.backup(),
+        "application/json",
+      );
     } catch (e) {
       setError(message(e));
     }
   };
   const restore = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ["application/json", "text/plain"],
-        copyToCacheDirectory: true,
+      const text = await pickBackupText();
+      if (text === null) return;
+      setConfirmation({
+        title: "백업으로 복원할까요?",
+        body: "현재 기기 데이터 전체를 선택한 백업으로 바꿉니다. 먼저 현재 데이터를 백업해 주세요.",
+        label: "복원",
+        action: () =>
+          void replaceData(async () => {
+            if (store.current) return store.current.restore(text);
+            store.current = await recoverPlatformStore(text);
+            return store.current.load();
+          }),
       });
-      if (result.canceled) return;
-      const file = new File(result.assets[0].uri);
-      if (file.size > 20_000_000) throw Error("백업이 너무 큽니다.");
-      const text = await file.text();
-      Alert.alert(
-        "백업으로 복원할까요?",
-        "현재 기기 데이터 전체를 선택한 백업으로 바꿉니다. 먼저 현재 데이터를 백업해 주세요.",
-        [
-          { text: "취소", style: "cancel" },
-          {
-            text: "복원",
-            onPress: () =>
-              void replaceData(async () => {
-                if (store.current) return store.current.restore(text);
-                store.current = await recoverStore(database.current, text);
-                return store.current.load();
-              }),
-          },
-        ],
-      );
     } catch (e) {
       setError(message(e));
     }
@@ -412,6 +312,11 @@ function Onjeom() {
           온점.
         </Text>
         <Text style={s.small}>하루를 조금씩, 나의 속도로</Text>
+        {Platform.OS === "web" && (
+          <Text style={s.small}>
+            브라우저 미리보기 · 이 브라우저에만 저장돼요.
+          </Text>
+        )}
       </View>
       {error ? (
         <View accessibilityRole="alert" style={s.error}>
@@ -419,9 +324,7 @@ function Onjeom() {
           {!ready && (
             <>
               <Button title="다시 불러오기" onPress={() => void load()} />
-              {database.current && (
-                <Button title="백업에서 복구" onPress={() => void restore()} />
-              )}
+              <Button title="백업에서 복구" onPress={() => void restore()} />
             </>
           )}
         </View>
@@ -433,6 +336,7 @@ function Onjeom() {
       ) : (
         <>
           <ScrollView
+            ref={scroll}
             contentContainerStyle={s.content}
             keyboardShouldPersistTaps="handled"
           >
@@ -448,6 +352,11 @@ function Onjeom() {
                   잘 정리하지 않아도 괜찮아요. 떠오르는 생각을 자유롭게 적어
                   주세요.
                 </Text>
+                <GardenScene
+                  season={season}
+                  progress={state.progress}
+                  flowers={state.flowers}
+                />
                 <TextInput
                   accessibilityLabel="자유로운 생각 입력"
                   multiline
@@ -570,10 +479,7 @@ function Onjeom() {
             {tab === "실행" && (
               <>
                 <Text style={s.eyebrow}>지금은 하나만</Text>
-                <Botanical
-                  size={100}
-                  color={state.completedTotal % 4 === 3 ? "#e6c4a7" : "#bbcba6"}
-                />
+                <FlowerArt size={140} stage={state.progress} color="#dfbcb0" />
                 {current ? (
                   <View style={s.card}>
                     <Text style={s.small}>다른 일은 잠시 내려두세요.</Text>
@@ -624,97 +530,125 @@ function Onjeom() {
             )}
             {tab === "정원" && (
               <>
-                <View
-                  style={[s.garden, { backgroundColor: backgrounds[season] }]}
-                >
-                  <Text style={s.eyebrow}>{season}의 정원</Text>
-                  <Text style={s.title}>어느새, 피어났네요.</Text>
-                  <View style={s.wrap}>
-                    {state.flowers.slice(0, 6).map((f) => (
-                      <Botanical
-                        key={f.id}
-                        size={65}
-                        color={flowerInfo(f).color.hex}
-                      />
-                    ))}
-                    {!state.flowers.length && (
-                      <Botanical size={110} color="#c5d1b7" />
-                    )}
-                  </View>
-                  <Text style={s.small}>작은 행동들이 모여 만든 풍경</Text>
-                </View>
-                <Text accessibilityRole="header" style={s.subtitle}>
-                  기억의 정원 · {state.flowers.length}송이
-                </Text>
-                <Text style={s.body}>
-                  미등록 꽃도 이곳에 계속 남아요. 도감 등록은 언제든 선택할 수
-                  있어요.
-                </Text>
-                {state.flowers.map((f) => {
-                  const info = flowerInfo(f);
-                  return (
-                    <View style={s.card} key={f.id}>
-                      <View style={s.row}>
-                        <Botanical size={60} color={info.color.hex} />
-                        <View style={{ flex: 1 }}>
-                          <Text style={s.subtitle}>{info.name}</Text>
-                          <Text style={s.small}>
-                            {info.color.name} · {flowerDay(f)}
-                          </Text>
-                          <Text style={s.body}>“{info.meaning}”</Text>
-                          <Text style={s.small}>
-                            온점. 창작 문구 · 전통 꽃말을 뜻하지 않아요.
-                          </Text>
-                        </View>
-                      </View>
-                      <Text style={s.small}>{achievementText(f)}</Text>
+                <Text style={s.eyebrow}>{season}의 작은 정원</Text>
+                <Text style={s.title}>어느새, 피어났네요.</Text>
+                <GardenScene
+                  season={season}
+                  progress={state.progress}
+                  flowers={state.flowers}
+                />
+                <View style={s.row}>
+                  {["기억", "도감"].map((section) => (
+                    <View key={section} style={{ flex: 1 }}>
                       <Button
-                        title="꽃말 카드 저장·공유 · 무료"
-                        secondary
-                        onPress={() => void shareFlower(f)}
+                        title={section === "기억" ? "기억의 정원" : "꽃 도감"}
+                        secondary={gardenView !== section}
+                        onPress={() => setGardenView(section)}
                       />
-                      {f.registeredAt ? (
-                        <Text style={s.link}>도감에 담았어요</Text>
-                      ) : (
-                        <Button
-                          title="도감에 담기"
-                          disabled={busy}
-                          onPress={() => void register(f)}
-                        />
-                      )}
                     </View>
-                  );
-                })}
-                <Text style={s.subtitle}>꽃 도감</Text>
-                <Text style={s.small}>꽃말은 온점.의 창작 문구입니다.</Text>
-                <Text style={s.small}>
-                  원본 기본 12종 · 고정일 시즌 3종 · 추석은 공식 연도별 일정
-                  등록 후 제공해요.
-                </Text>
-                {catalogSpecies.map((species: any) => {
-                  const found = state.flowers.filter(
-                    (f) => f.registeredAt && f.speciesId === species.id,
-                  );
-                  return (
-                    <View key={species.id} style={s.card}>
-                      <Text style={s.subtitle}>
-                        {found.length ? species.name : "아직 만나지 않은 꽃"}
-                      </Text>
-                      <Text style={s.small}>
-                        {found.length
-                          ? `${species.quote} · ${new Set(found.map((f) => f.variantId)).size}가지 색상`
-                          : "일상을 정리하다 보면 만날 수 있어요."}
-                      </Text>
-                      {found.map((f) => (
-                        <Text key={f.id} style={s.body}>
-                          {flowerInfo(f).color.name} · {flowerDay(f)} · “
-                          {f.quote}”{"\n"}
-                          {achievementText(f)}
+                  ))}
+                </View>
+                {gardenView === "기억" && (
+                  <>
+                    <Text accessibilityRole="header" style={s.subtitle}>
+                      기억의 정원 · {state.flowers.length}송이
+                    </Text>
+                    <Text style={s.body}>
+                      미등록 꽃도 이곳에 계속 남아요. 도감 등록은 언제든 선택할
+                      수 있어요.
+                    </Text>
+                    {state.flowers.map((f) => {
+                      const info = flowerInfo(f);
+                      return (
+                        <View style={s.card} key={f.id}>
+                          <View style={s.row}>
+                            <FlowerArt
+                              size={60}
+                              species={f.speciesId}
+                              color={info.color.hex}
+                            />
+                            <View style={{ flex: 1 }}>
+                              <Text style={s.subtitle}>{info.name}</Text>
+                              <Text style={s.small}>
+                                {info.color.name} · {flowerDay(f)}
+                              </Text>
+                              <Text style={s.body}>“{info.meaning}”</Text>
+                              <Text style={s.small}>
+                                온점. 창작 문구 · 전통 꽃말을 뜻하지 않아요.
+                              </Text>
+                            </View>
+                          </View>
+                          <Text style={s.small}>{achievementText(f)}</Text>
+                          <Button
+                            title="꽃말 카드 저장·공유 · 무료"
+                            secondary
+                            onPress={() => void shareFlower(f)}
+                          />
+                          {f.registeredAt ? (
+                            <Text style={s.link}>도감에 담았어요</Text>
+                          ) : (
+                            <Button
+                              title="도감에 담기"
+                              disabled={busy}
+                              onPress={() => void register(f)}
+                            />
+                          )}
+                        </View>
+                      );
+                    })}
+                    {!state.flowers.length && (
+                      <View style={s.card}>
+                        <Text style={s.subtitle}>아직은, 여백으로 두어요.</Text>
+                        <Text style={s.body}>
+                          하루를 하나씩 정리하다 보면 이곳에도 나만의 꽃이 남을
+                          거예요.
                         </Text>
-                      ))}
-                    </View>
-                  );
-                })}
+                      </View>
+                    )}
+                  </>
+                )}
+                {gardenView === "도감" && (
+                  <>
+                    <Text style={s.subtitle}>꽃 도감</Text>
+                    <Text style={s.small}>꽃말은 온점.의 창작 문구입니다.</Text>
+                    <Text style={s.small}>
+                      원본 기본 12종 · 고정일 시즌 3종 · 추석은 공식 연도별 일정
+                      등록 후 제공해요.
+                    </Text>
+                    {catalogSpecies.map((species: any) => {
+                      const found = state.flowers.filter(
+                        (f) => f.registeredAt && f.speciesId === species.id,
+                      );
+                      return (
+                        <View key={species.id} style={s.card}>
+                          <FlowerArt
+                            species={species.id}
+                            color={found[0]?.color || "#c3cdb8"}
+                            stage={found.length ? 4 : 0}
+                            size={75}
+                          />
+                          <Text style={s.subtitle}>
+                            {found.length
+                              ? species.name
+                              : "아직 만나지 않은 꽃"}
+                          </Text>
+                          <Text style={s.small}>
+                            {found.length
+                              ? `${species.quote} · ${new Set(found.map((f) => f.variantId)).size}가지 색상`
+                              : "일상을 정리하다 보면 만날 수 있어요."}
+                          </Text>
+                          {found.map((f) => (
+                            <Text key={f.id} style={s.body}>
+                              {flowerInfo(f).color.name} · {flowerDay(f)} · “
+                              {f.quote}”{"\n"}
+                              {achievementText(f)}
+                            </Text>
+                          ))}
+                        </View>
+                      );
+                    })}
+                  </>
+                )}
               </>
             )}
             {tab === "씨앗" && (
@@ -794,8 +728,8 @@ function Onjeom() {
                 <View style={s.card}>
                   <Text style={s.subtitle}>내 기기에만 남는 기록</Text>
                   <Text style={s.body}>
-                    SQLite 자동 저장 · 서버 전송 없음. 백업 파일에는 생각과 성취
-                    기록이 담기며 암호화되지 않습니다. 안전한 곳에 보관해
+                    이 기기에 자동 저장 · 서버 전송 없음. 백업 파일에는 생각과
+                    성취 기록이 담기며 암호화되지 않습니다. 안전한 곳에 보관해
                     주세요.
                   </Text>
                   <Button
@@ -815,19 +749,13 @@ function Onjeom() {
                     secondary
                     disabled={busy}
                     onPress={() =>
-                      Alert.alert(
-                        "모든 기록을 지울까요?",
-                        "꽃, 씨앗과 성취 기록이 모두 삭제됩니다. 내보낸 백업 파일은 별도로 삭제해 주세요.",
-                        [
-                          { text: "취소", style: "cancel" },
-                          {
-                            text: "전체 삭제",
-                            style: "destructive",
-                            onPress: () =>
-                              void replaceData(() => store.current.clear()),
-                          },
-                        ],
-                      )
+                      setConfirmation({
+                        title: "모든 기록을 지울까요?",
+                        body: "꽃, 씨앗과 성취 기록이 모두 삭제됩니다. 내보낸 백업 파일은 별도로 삭제해 주세요.",
+                        label: "전체 삭제",
+                        action: () =>
+                          void replaceData(() => store.current.clear()),
+                      })
                     }
                   />
                 </View>
@@ -856,227 +784,197 @@ function Onjeom() {
           </View>
         </>
       )}
-      <Modal
-        visible={manage}
-        transparent
-        animationType="none"
-        onRequestClose={() => setManage(false)}
-      >
-        <View style={s.overlay}>
-          <ScrollView contentContainerStyle={s.dialog}>
-            <Text style={s.title}>내가 정하는 한 걸음</Text>
-            {error ? <Text accessibilityRole="alert">{error}</Text> : null}
-            {active.map((t, i) => (
-              <View key={t.id} style={s.card}>
-                <Text style={s.subtitle}>{t.title}</Text>
-                {editingId === t.id ? (
-                  <>
-                    <TextInput
-                      accessibilityLabel="할 일 제목 수정"
-                      value={editingTitle}
-                      onChangeText={setEditingTitle}
-                      maxLength={500}
-                      style={s.input}
-                    />
-                    <Button
-                      title="수정 저장"
-                      disabled={busy}
-                      onPress={() =>
-                        void commit((s) =>
-                          editTask(s, t.id, editingTitle),
-                        ).then((next) => {
-                          if (next) setEditingId(null);
-                        })
-                      }
-                    />
-                  </>
-                ) : (
-                  <Button
-                    title="제목 수정"
-                    secondary
-                    onPress={() => {
-                      setEditingId(t.id);
-                      setEditingTitle(t.title);
-                    }}
-                  />
-                )}
-                <View style={s.row}>
-                  <Button
-                    title="위로"
-                    secondary
-                    disabled={busy || i === 0}
-                    onPress={() => void commit((s) => reorderTask(s, t.id, -1))}
-                  />
-                  <Button
-                    title="아래로"
-                    secondary
-                    disabled={busy || i === active.length - 1}
-                    onPress={() => void commit((s) => reorderTask(s, t.id, 1))}
-                  />
-                </View>
+      <Sheet visible={!!confirmation} onClose={() => setConfirmation(null)}>
+        <Text accessibilityRole="header" style={s.title}>
+          {confirmation?.title}
+        </Text>
+        <Text style={s.body}>{confirmation?.body}</Text>
+        <Button
+          title={confirmation?.label || "확인"}
+          disabled={busy}
+          onPress={() => {
+            const action = confirmation?.action;
+            setConfirmation(null);
+            action?.();
+          }}
+        />
+        <Button title="취소" secondary onPress={() => setConfirmation(null)} />
+      </Sheet>
+      <Sheet visible={manage} onClose={() => setManage(false)}>
+        <Text style={s.title}>내가 정하는 한 걸음</Text>
+        {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+        {active.map((t, i) => (
+          <View key={t.id} style={s.card}>
+            <Text style={s.subtitle}>{t.title}</Text>
+            {editingId === t.id ? (
+              <>
+                <TextInput
+                  accessibilityLabel="할 일 제목 수정"
+                  value={editingTitle}
+                  onChangeText={setEditingTitle}
+                  maxLength={500}
+                  style={s.input}
+                />
                 <Button
-                  title="할 일 삭제"
-                  secondary
+                  title="수정 저장"
                   disabled={busy}
                   onPress={() =>
-                    Alert.alert(
-                      "할 일을 삭제할까요?",
-                      "다시 하고 싶은 일은 씨앗 보관함에 둘 수도 있어요.",
-                      [
-                        { text: "취소", style: "cancel" },
-                        {
-                          text: "삭제",
-                          style: "destructive",
-                          onPress: () =>
-                            void commit((s) => changeTask(s, t.id, "delete")),
-                        },
-                      ],
+                    void commit((s) => editTask(s, t.id, editingTitle)).then(
+                      (next) => {
+                        if (next) setEditingId(null);
+                      },
                     )
                   }
                 />
-              </View>
-            ))}
-            {!active.length && <Text style={s.body}>지금 할 일은 없어요.</Text>}
-            <Button
-              title="돌아가기"
-              secondary
-              onPress={() => setManage(false)}
-            />
-          </ScrollView>
-        </View>
-      </Modal>
-      <Modal
-        visible={splitId !== null}
-        transparent
-        animationType="none"
-        onRequestClose={() => setSplitId(null)}
-      >
-        <View style={s.overlay}>
-          <ScrollView contentContainerStyle={s.dialog}>
-            {error ? <Text accessibilityRole="alert">{error}</Text> : null}
-            <Text style={s.title}>더 작아도 괜찮아요.</Text>
-            <Text style={s.body}>
-              한 줄에 한 단계씩 적어 주세요. 원래 할 일을 이 단계들로 바꿉니다.
-            </Text>
-            <TextInput
-              accessibilityLabel="작은 단계 입력"
-              multiline
-              value={steps}
-              onChangeText={setSteps}
-              style={[s.input, { minHeight: 120 }]}
-              maxLength={10000}
-            />
-            <Button
-              title="작은 단계로 바꾸기"
-              disabled={busy || !steps.trim()}
-              onPress={() =>
-                void commit((s) =>
-                  changeTask(s, splitId, "split", steps.split("\n")),
-                ).then((next) => {
-                  if (next) setSplitId(null);
-                })
-              }
-            />
-            <Button
-              title="돌아가기"
-              secondary
-              onPress={() => setSplitId(null)}
-            />
-          </ScrollView>
-        </View>
-      </Modal>
-      <Modal
-        visible={!!bloom}
-        transparent
-        animationType="none"
-        onRequestClose={() => setBloom(null)}
-      >
-        <View style={s.overlay}>
-          <Animated.View style={[s.dialog, { opacity: fade }]}>
-            {error ? <Text accessibilityRole="alert">{error}</Text> : null}
-            {bloom && (
-              <>
-                <Text style={s.eyebrow}>당신의 작은 행동 끝에</Text>
-                <Botanical color={flowerInfo(bloom).color.hex} size={135} />
-                <Text accessibilityRole="header" style={s.title}>
-                  {flowerInfo(bloom).name}이 피었어요.
-                </Text>
-                <Text style={s.body}>“{flowerInfo(bloom).meaning}”</Text>
-                <Text style={s.small}>
-                  온점. 창작 문구 · 전통 꽃말을 뜻하지 않아요.
-                </Text>
-                <Text style={s.small}>
-                  {flowerDay(bloom)} · {flowerInfo(bloom).color.name}
-                  {"\n"}
-                  {achievementText(bloom)}
-                </Text>
-                <Button
-                  title="꽃말 카드 저장·공유 · 무료"
-                  secondary
-                  onPress={() => void shareFlower(bloom)}
-                />
-                <Button
-                  title="기억의 정원에서 만나기"
-                  onPress={() => {
-                    setBloom(null);
-                    setTab("정원");
-                  }}
-                />
-                <Button
-                  title="지금은 이 순간만 간직하기"
-                  secondary
-                  onPress={() => setBloom(null)}
-                />
               </>
+            ) : (
+              <Button
+                title="제목 수정"
+                secondary
+                onPress={() => {
+                  setEditingId(t.id);
+                  setEditingTitle(t.title);
+                }}
+              />
             )}
-          </Animated.View>
-        </View>
-      </Modal>
-      <Modal
-        visible={!!adFlower}
-        transparent
-        animationType="none"
-        onRequestClose={() => setAdFlower(null)}
-      >
-        <View style={s.overlay}>
-          <View style={s.dialog}>
-            {error ? <Text accessibilityRole="alert">{error}</Text> : null}
-            <Text style={s.eyebrow}>보상형 광고 · 테스트 모드</Text>
-            <Text style={s.title}>도감에 새 꽃을 담을까요?</Text>
-            <Text style={s.body}>
-              실제 광고는 재생되지 않습니다. 아래 버튼으로 보상 결과를 테스트할
-              수 있어요. 취소하거나 광고가 없어도 꽃은 정원에 영구 보관됩니다.
+            <View style={s.row}>
+              <Button
+                title="위로"
+                secondary
+                disabled={busy || i === 0}
+                onPress={() => void commit((s) => reorderTask(s, t.id, -1))}
+              />
+              <Button
+                title="아래로"
+                secondary
+                disabled={busy || i === active.length - 1}
+                onPress={() => void commit((s) => reorderTask(s, t.id, 1))}
+              />
+            </View>
+            <Button
+              title="할 일 삭제"
+              secondary
+              disabled={busy}
+              onPress={() => (
+                setManage(false),
+                setConfirmation({
+                  title: "할 일을 삭제할까요?",
+                  body: "다시 하고 싶은 일은 씨앗 보관함에 둘 수도 있어요.",
+                  label: "삭제",
+                  action: () =>
+                    void commit((s) => changeTask(s, t.id, "delete")),
+                })
+              )}
+            />
+          </View>
+        ))}
+        {!active.length && <Text style={s.body}>지금 할 일은 없어요.</Text>}
+        <Button title="돌아가기" secondary onPress={() => setManage(false)} />
+      </Sheet>
+      <Sheet visible={splitId !== null} onClose={() => setSplitId(null)}>
+        {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+        <Text style={s.title}>더 작아도 괜찮아요.</Text>
+        <Text style={s.body}>
+          한 줄에 한 단계씩 적어 주세요. 원래 할 일을 이 단계들로 바꿉니다.
+        </Text>
+        <TextInput
+          accessibilityLabel="작은 단계 입력"
+          multiline
+          value={steps}
+          onChangeText={setSteps}
+          style={[s.input, { minHeight: 120 }]}
+          maxLength={10000}
+        />
+        <Button
+          title="작은 단계로 바꾸기"
+          disabled={busy || !steps.trim()}
+          onPress={() =>
+            void commit((s) =>
+              changeTask(s, splitId, "split", steps.split("\n")),
+            ).then((next) => {
+              if (next) setSplitId(null);
+            })
+          }
+        />
+        <Button title="돌아가기" secondary onPress={() => setSplitId(null)} />
+      </Sheet>
+      <Sheet visible={!!bloom} onClose={() => setBloom(null)} opacity={fade}>
+        {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+        {bloom && (
+          <>
+            <Text style={s.eyebrow}>당신의 작은 행동 끝에</Text>
+            <FlowerArt
+              species={bloom.speciesId}
+              color={flowerInfo(bloom).color.hex}
+              size={135}
+            />
+            <Text accessibilityRole="header" style={s.title}>
+              {subject(flowerInfo(bloom).name)} 피었어요.
+            </Text>
+            <Text style={s.body}>“{flowerInfo(bloom).meaning}”</Text>
+            <Text style={s.small}>
+              온점. 창작 문구 · 전통 꽃말을 뜻하지 않아요.
+            </Text>
+            <Text style={s.small}>
+              {flowerDay(bloom)} · {flowerInfo(bloom).color.name}
+              {"\n"}
+              {achievementText(bloom)}
             </Text>
             <Button
-              title="테스트: 보상 완료"
-              disabled={busy}
-              onPress={() =>
-                void commit((s) =>
-                  registerFlower(s, adFlower?.id, { reward: "earned-test" }),
-                ).then((next) => {
-                  if (next) setAdFlower(null);
-                })
-              }
+              title="꽃말 카드 저장·공유 · 무료"
+              secondary
+              onPress={() => void shareFlower(bloom)}
             />
             <Button
-              title="테스트: 광고 제공 안 됨"
-              secondary
+              title="기억의 정원에서 만나기"
               onPress={() => {
-                setAdFlower(null);
-                Alert.alert(
-                  "광고가 없어요",
-                  "꽃은 정원에서 기다릴게요. 나중에 다시 담아도 좋아요.",
-                );
+                setBloom(null);
+                setTab("정원");
               }}
             />
             <Button
-              title="취소하고 꽃 보관"
+              title="지금은 이 순간만 간직하기"
               secondary
-              onPress={() => setAdFlower(null)}
+              onPress={() => setBloom(null)}
             />
-          </View>
-        </View>
-      </Modal>
+          </>
+        )}
+      </Sheet>
+      <Sheet visible={!!adFlower} onClose={() => setAdFlower(null)}>
+        {error ? <Text accessibilityRole="alert">{error}</Text> : null}
+        <Text style={s.eyebrow}>보상형 광고 · 테스트 모드</Text>
+        <Text style={s.title}>도감에 새 꽃을 담을까요?</Text>
+        <Text style={s.body}>
+          실제 광고는 재생되지 않습니다. 아래 버튼으로 보상 결과를 테스트할 수
+          있어요. 취소하거나 광고가 없어도 꽃은 정원에 영구 보관됩니다.
+        </Text>
+        <Button
+          title="테스트: 보상 완료"
+          disabled={busy}
+          onPress={() =>
+            void commit((s) =>
+              registerFlower(s, adFlower?.id, { reward: "earned-test" }),
+            ).then((next) => {
+              if (next) setAdFlower(null);
+            })
+          }
+        />
+        <Button
+          title="테스트: 광고 제공 안 됨"
+          secondary
+          onPress={() => {
+            setAdFlower(null);
+            setError(
+              "광고가 없어요. 꽃은 정원에서 기다릴게요. 나중에 다시 담아도 좋아요.",
+            );
+          }}
+        />
+        <Button
+          title="취소하고 꽃 보관"
+          secondary
+          onPress={() => setAdFlower(null)}
+        />
+      </Sheet>
     </SafeAreaView>
   );
 }
@@ -1176,20 +1074,4 @@ const s = StyleSheet.create({
   },
   navText: { fontSize: 14, color: palette.muted },
   error: { backgroundColor: "#f4e2d3", padding: 16 },
-  overlay: {
-    flex: 1,
-    justifyContent: "center",
-    backgroundColor: "rgba(40,62,52,.38)",
-    padding: 24,
-  },
-  dialog: {
-    backgroundColor: palette.cream,
-    borderRadius: 28,
-    padding: 24,
-    gap: 12,
-    width: "100%",
-    maxWidth: 600,
-    alignSelf: "center",
-    marginVertical: 32,
-  },
 });
