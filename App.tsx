@@ -19,7 +19,8 @@ import DiaryHome from "./src/components/DiaryHome";
 import DiaryHistory from "./src/components/DiaryHistory";
 import { saveJournal } from "./src/journal.mjs";
 import FocusScreen from "./src/components/FocusScreen";
-import GardenPager from "./src/components/GardenPager";
+import MemoryGarden from "./src/components/MemoryGarden";
+import BotanicalCatalog from "./src/components/BotanicalCatalog";
 import AppIcon from "./src/components/AppIcon";
 import Sheet from "./src/components/Sheet";
 import InstallHint from "./src/components/InstallHint";
@@ -441,58 +442,21 @@ function Onjeom() {
                 </View>
                 {gardenView === "기억" ? (
                   <>
-                    <GardenPager
-                      items={state.flowers.map((f) => ({
-                        id: f.id,
-                        flowerId: f.id,
-                        name: f.name,
-                        speciesId: f.speciesId,
-                        color: f.color,
-                        note:
-                          f.variantName +
-                          " · " +
-                          (f.registeredAt ? "도감에 담김" : "미등록"),
-                      }))}
-                      onSelect={setSelectedId}
-                    />
-                    <Text style={s.gardenNote}>
-                      {state.flowers.length
-                        ? "꽃을 누르면 그날의 작은 이야기가 열려요."
-                        : "아직 빈 자리도 괜찮아요. 작은 행동 끝에 꽃이 찾아올 거예요."}
-                    </Text>
+                    <MemoryGarden flowers={state.flowers} progress={state.progress}
+                      season={season} onSelect={setSelectedId}/>
+                    <Text style={s.gardenNote}>꽃을 누르면 그날의 작은 이야기가 열려요.</Text>
                   </>
                 ) : (
-                  <>
-                    <GardenPager
-                      label="도감"
-                      items={catalogSpecies.map((species: any) => {
-                        const found = state.flowers.filter(
-                          (f) => f.registeredAt && f.speciesId === species.id,
-                        );
-                        return {
-                          id: species.id,
-                          flowerId: found[0]?.id,
-                          name: found.length ? species.name : "미발견",
-                          speciesId: species.id,
-                          color: found[0]?.color || "#bbc6ac",
-                          note: found.length
-                            ? new Set(found.map((f) => f.variantId)).size +
-                              "가지 색상"
-                            : "아직 빈 페이지",
-                        };
-                      })}
-                      onSelect={(id) => {
-                        const found = state.flowers.find(
-                          (f) => f.registeredAt && f.speciesId === id,
-                        );
-                        if (found) setSelectedId(found.id);
-                        else setUnknown(true);
-                      }}
-                    />
-                    <Text style={s.gardenNote}>
-                      꽃말은 온점.의 창작 문구입니다.
-                    </Text>
-                  </>
+                  <BotanicalCatalog
+                    items={catalogSpecies.map((species:any)=>{
+                      const found=state.flowers.filter(f=>f.registeredAt && f.speciesId===species.id);
+                      return {id:species.id,name:species.name,speciesId:species.id,
+                        color:found[0]?.color||"#BBC6AC",foundId:found[0]?.id,
+                        count:new Set(found.map(f=>f.variantId)).size};
+                    })}
+                    onFlower={setSelectedId}
+                    onUnknown={()=>setUnknown(true)}
+                  />
                 )}
               </>
             )}
