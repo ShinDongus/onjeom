@@ -29,3 +29,5 @@ GitHub 내부 설정 자동화도 실행했습니다. `.github/workflows/configu
 최신 상태(2026-11-04): 사용자가 Pages 설정을 완료했고 실제 공개 사이트 검증이 통과했습니다. `.github/pages-live-status.json`의 verified:true, phase:ready 및 실행 41756901625를 보세요. 사이트 https://shindongus.github.io/onjeom/ 는 gh-pages / 배포 커밋 0243779에서 HTML/JS/설치파일 HTTP200을 확인했습니다. 이전 pages-status.json의 생성권한 403은 과거 기록입니다. 현재 상태를 그 실패만으로 판단하거나 사용자에게 Pages 활성화를 다시 요구하지 마세요. 실물 아이폰 설치는 별도 검증 대상입니다.
 
 최신 UI: HomeScreen은 입력 폼 대신 화분과 단일 작업 중심이며 생각 입력/규칙 분리/사용자 검토는 compose Sheet에 있습니다. GardenPager는 3×3(페이지당9칸) 가상화 FlatList와 스와이프/이전·다음 제어를 제공합니다. 꽃별 정보·무료 카드·도감 등록은 선택한 꽃의 상세 Sheet로 옮겼습니다. 이전의 전체 꽃 카드 목록으로 되돌리지 마세요. native UI 테스트는 5개이고 정원 페이징·빈칸·복구·광고취소를 유지하세요. 저장 스키마는 v3 그대로입니다.
+
+3×3 정원과 새 HomeScreen은 실제 사이트에 배포됐습니다. 최신 검증 실행 41759436012, 배포 e2fb2ab6e5b330c77b745584691f8b730d03b862, web bundle index-207b8968a5a68b1e0fc3e227b2d3c445.js입니다. verify-live-pages는 이제 gh-pages 최신 커밋이 빌드될 때까지 기다리고 공개 HTML이 실제 커밋의 HTML과 일치하는지 확인하므로 오래된 배포를 성공으로 오인하지 않습니다.

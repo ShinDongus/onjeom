@@ -56,3 +56,5 @@ GitHub Actions 실행 https://github.com/ShinDongus/onjeom/actions/runs/41661230
 ## 모바일 앱 화면 개편 — 2026-11-04
 
 시작 화면·입력/검토 시트·아이콘 탭·3×3 가상화 정원·꽃 상세 시트를 구현함. npm test 31개, npm run test:mobile 5개, npm run test:pages 1개, TypeScript 검사와 iOS/Android Hermes 번들 생성 통과. 12송이에서 첫 페이지 9송이, 다음 페이지 3송이+빈자리6칸, 빈 정원9칸, 페이지 경계 버튼, 실제 가로 휠 스크롤, 화면 크기 변경, 상세 기록, 광고 취소 보존 및 백업 복구를 확인함. 스크린샷 mobile-today.png, mobile-garden.png, mobile-garden-page2.png, desktop-home.png를 직접 검토함. 브라우저 가로 스크롤을 테스트했고 실물 iOS/Android 터치 스와이프는 미검증. 원본 아카이브·도메인·저장 스키마는 변경하지 않음.
+
+모바일 개편 배포 확인: 소스 cc6f1f1, Pages 배포 e2fb2ab6e5b330c77b745584691f8b730d03b862. GitHub 실행 https://github.com/ShinDongus/onjeom/actions/runs/41759436012 에서 최신 배포 커밋과 built 상태가 일치하고 공개 HTML이 해당 커밋의 index.html과 동일함을 확인함. 새 web index-207b8968a5a68b1e0fc3e227b2d3c445.js, 설치 파일·아이콘·매니페스트 모두 HTTP200. 결과 커밋 9c14283b146a3d49d46d4e6d15f77c04a3f589f5. 공개 사이트 전체 기능은 기존 로컬 브라우저 회귀검증과 구분하며 실물 터치 스와이프는 미검증.
