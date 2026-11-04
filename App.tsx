@@ -43,6 +43,7 @@ import {
   reorderTask,
 } from "./src/mobile-domain.mjs";
 import { ruleSeparator } from "./src/separator.mjs";
+import { groqSeparate } from "./src/groq-client.mjs";
 
 type Task = { id: string; title: string; status: string; order: number };
 type Flower = {
@@ -134,6 +135,13 @@ function Onjeom() {
   const [tab, setTab] = useState("오늘"),
     [thought, setThought] = useState(""),
     [draft, setDraft] = useState<string[] | null>(null);
+  // In-memory only. Never persist backend access codes or send Groq keys from the app.
+  const [groqUrl, setGroqUrl] = useState("");
+  const [groqAccess, setGroqAccess] = useState("");
+  const [groqSettings, setGroqSettings] = useState(false);
+  const [groqBusy, setGroqBusy] = useState(false);
+  const [draftSource, setDraftSource] = useState("rules");
+  const groqAbortRef = useRef<AbortController | null>(null);
   const [confirmation, setConfirmation] = useState<{
     title: string;
     body: string;
@@ -257,6 +265,34 @@ function Onjeom() {
   };
   const saveDiary = (entryDay: string, text: string, mood: string|null) => {
     void commit((s) => saveJournal(s,entryDay,{text,mood}));
+  };
+  const organizeWithGroq = async () => {
+    if (groqBusy) return;
+    const controller = new AbortController();
+    groqAbortRef.current = controller;
+    setGroqBusy(true);
+    try {
+      const items: string[] = await groqSeparate(thought, {
+        endpoint: groqUrl.trim(),
+        accessToken: groqAccess,
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      setDraft(items);
+      setDraftSource("groq");
+      setError("");
+    } catch (e) {
+      if (!controller.signal.aborted) setError(message(e));
+    } finally {
+      if (groqAbortRef.current === controller) groqAbortRef.current = null;
+      setGroqBusy(false);
+    }
+  };
+  const closeComposer = () => {
+    groqAbortRef.current?.abort();
+    groqAbortRef.current = null;
+    setGroqBusy(false);
+    setCompose(false);
   };
   const shareFlower = async (f: Flower) => {
     try {
@@ -604,7 +640,7 @@ function Onjeom() {
           </View>
         </>
       )}
-      <Sheet visible={compose} onClose={() => setCompose(false)}>
+      <Sheet visible={compose} onClose={closeComposer}>
         <Text accessibilityRole="header" style={s.title}>
           {draft === null ? "생각을 꺼내놓아요." : "내가 정하는 한 걸음"}
         </Text>
@@ -623,22 +659,80 @@ function Onjeom() {
               textAlignVertical="top"
             />
             <Text style={s.small}>
-              규칙 기반으로 나눠요. 저장하기 전에 직접 다듬을 수 있어요.
+              기기에서 규칙 기반으로 정리하거나, 원할 때만 Groq AI로 정리할 수 있어요.
             </Text>
             <Button
               title="할 일로 나눠 보기"
-              disabled={busy || !thought.trim()}
+              disabled={busy || groqBusy || !thought.trim()}
               onPress={() =>
                 void ruleSeparator
                   .separate(thought)
-                  .then((items: string[]) => setDraft(items))
+                  .then((items: string[]) => {
+                    setDraftSource("rules");
+                    setDraft(items);
+                    setError("");
+                  })
                   .catch((e: unknown) => setError(message(e)))
               }
+            />
+            <Button
+              title={groqSettings ? "Groq 연결 설정 닫기" : "Groq AI 연결 설정 (선택)"}
+              secondary
+              onPress={() => setGroqSettings(!groqSettings)}
+            />
+            {groqSettings && (
+              <View style={s.record}>
+                <Text style={s.subtitle}>Groq 연결 정보 · 현재 실행 중에만 유지</Text>
+                <Text style={s.small}>
+                  백엔드 주소와 별도의 온점. 접근 코드를 입력하세요. Groq API 키는 절대 이곳에 입력하지 마세요.
+                </Text>
+                <TextInput
+                  accessibilityLabel="Groq 백엔드 주소"
+                  placeholder="https://내-서버.vercel.app/api/organize"
+                  value={groqUrl}
+                  onChangeText={setGroqUrl}
+                  autoCorrect={false}
+                  autoCapitalize="none"
+                  style={s.input}
+                />
+                <TextInput
+                  accessibilityLabel="온점 서버 접근 코드"
+                  placeholder="서버의 ONJEOM_ACCESS_TOKEN 값"
+                  value={groqAccess}
+                  onChangeText={setGroqAccess}
+                  autoCorrect={false}
+                  autoCapitalize="none"
+                  secureTextEntry
+                  style={s.input}
+                />
+                <Button
+                  title="연결 정보 지우기"
+                  secondary
+                  onPress={() => { setGroqUrl(""); setGroqAccess(""); }}
+                />
+              </View>
+            )}
+            <Text style={s.small}>
+              'Groq AI로 정리'를 누르면 현재 입력한 생각만 사용자님의 백엔드를 거쳐 Groq로 전송됩니다.
+              일기·꽃·기존 기록을 자동 전송하지 않습니다. 결과는 반드시 검토 후 저장하세요.
+            </Text>
+            <Button
+              title={groqBusy ? "Groq 정리 중..." : "Groq AI로 정리하기 · 직접 요청"}
+              secondary
+              disabled={busy || groqBusy || !thought.trim() || !groqUrl.trim() || !groqAccess.trim()}
+              onPress={() => void organizeWithGroq()}
             />
           </>
         ) : (
           <>
-            <Text style={s.small}>지금 할 수 있는 일만 남겨도 좋아요.</Text>
+            <Text style={s.small}>
+              {draftSource === "groq"
+                ? "Groq AI가 제안한 결과예요. 실제 입력과 맞는지 확인하고 직접 수정하세요."
+                : "규칙 기반 정리 결과예요. 지금 할 수 있는 일만 남겨도 좋아요."}
+            </Text>
+            {draft.length === 0 && (
+              <Text style={s.body}>입력에서 실행할 일을 찾지 못했어요. 직접 추가하거나 다시 적어도 괜찮아요.</Text>
+            )}
             {draft.map((text, i) => (
               <View key={i} style={s.record}>
                 <View style={s.row}>
@@ -721,7 +815,7 @@ function Onjeom() {
                   if (next) {
                     setDraft(null);
                     setThought("");
-                    setCompose(false);
+                    closeComposer();
                     setTab("실행");
                   }
                 })
@@ -734,7 +828,7 @@ function Onjeom() {
           secondary
           onPress={() => {
             if (draft !== null) setDraft(null);
-            else setCompose(false);
+            else closeComposer();
           }}
         />
       </Sheet>
