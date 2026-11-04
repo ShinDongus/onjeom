@@ -13,8 +13,9 @@ import {
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import FlowerArt from "./src/components/FlowerArt";
+import FlowerPortrait from "./src/components/FlowerPortrait";
 import HomeScreen from "./src/components/HomeScreen";
+import FocusScreen from "./src/components/FocusScreen";
 import GardenPager from "./src/components/GardenPager";
 import AppIcon from "./src/components/AppIcon";
 import Sheet from "./src/components/Sheet";
@@ -372,56 +373,24 @@ function Onjeom() {
               />
             )}
             {tab === "실행" && (
-              <>
-                <Text style={s.eyebrow}>지금은 하나만</Text>
-                <FlowerArt size={140} stage={state.progress} color="#dfbcb0" />
-                {current ? (
-                  <View style={s.card}>
-                    <Text style={s.small}>다른 일은 잠시 내려두세요.</Text>
-                    <Text accessibilityRole="header" style={s.title}>
-                      {current.title}
-                    </Text>
-                    <Button
-                      title="이만큼 해냈어요 · 완료"
-                      disabled={busy}
-                      onPress={() => void complete()}
-                    />
-                    <Button
-                      title="나중에 하기 · 씨앗에 보관"
-                      secondary
-                      disabled={busy}
-                      onPress={() =>
-                        void commit((s) => changeTask(s, current.id, "later"))
-                      }
-                    />
-                    <Button
-                      title="작은 단계로 나누기"
-                      secondary
-                      onPress={() => {
-                        setSplitId(current.id);
-                        setSteps("");
-                      }}
-                    />
-                  </View>
-                ) : (
-                  <View style={s.card}>
-                    <Text style={s.subtitle}>
-                      지금은 여백으로 두어도 좋아요.
-                    </Text>
-                    <Text style={s.body}>
-                      생각을 적거나 씨앗 보관함에서 다시 시작해 보세요.
-                    </Text>
-                    <Button
-                      title="생각 적으러 가기"
-                      onPress={() => setTab("오늘")}
-                    />
-                  </View>
-                )}
-                <Text style={s.small}>
-                  다음 꽃까지 작은 행동 {4 - (state.completedTotal % 4)}개 ·
-                  시간은 재지 않아요.
-                </Text>
-              </>
+              <FocusScreen
+                current={current}
+                progress={state.progress}
+                season={season}
+                busy={busy}
+                onComplete={() => void complete()}
+                onLater={() =>
+                  current &&
+                  void commit((s) => changeTask(s, current.id, "later"))
+                }
+                onSplit={() => {
+                  if (current) {
+                    setSplitId(current.id);
+                    setSteps("");
+                  }
+                }}
+                onCompose={() => setCompose(true)}
+              />
             )}
             {tab === "정원" && (
               <>
@@ -796,10 +765,9 @@ function Onjeom() {
             <Text style={s.eyebrow}>
               {flowerDay(selectedFlower)} · 나의 작은 기록
             </Text>
-            <FlowerArt
+            <FlowerPortrait
               species={selectedFlower.speciesId}
               color={selectedFlower.color}
-              size={132}
             />
             <Text accessibilityRole="header" style={s.title}>
               {selectedFlower.name}
@@ -993,24 +961,34 @@ function Onjeom() {
         {error ? <Text accessibilityRole="alert">{error}</Text> : null}
         {bloom && (
           <>
-            <Text style={s.eyebrow}>당신의 작은 행동 끝에</Text>
-            <FlowerArt
+            <Text style={[s.eyebrow, { textAlign: "center", fontSize: 12 }]}>
+              당신의 작은 행동 끝에
+            </Text>
+            <FlowerPortrait
               species={bloom.speciesId}
               color={flowerInfo(bloom).color.hex}
-              size={135}
             />
-            <Text accessibilityRole="header" style={s.title}>
+            <Text
+              accessibilityRole="header"
+              style={[s.title, { textAlign: "center", marginTop: 0 }]}
+            >
               {subject(flowerInfo(bloom).name)} 피었어요.
             </Text>
-            <Text style={s.body}>“{flowerInfo(bloom).meaning}”</Text>
-            <Text style={s.small}>
+            <Text style={s.quote}>“{flowerInfo(bloom).meaning}”</Text>
+            <Text style={[s.small, { textAlign: "center", fontSize: 11 }]}>
               온점. 창작 문구 · 전통 꽃말을 뜻하지 않아요.
             </Text>
-            <Text style={s.small}>
-              {flowerDay(bloom)} · {flowerInfo(bloom).color.name}
-              {"\n"}
-              {achievementText(bloom)}
-            </Text>
+            <View style={s.bloomMemory}>
+              <Text style={s.small}>
+                {flowerDay(bloom)} · {flowerInfo(bloom).color.name}
+              </Text>
+              <Text
+                numberOfLines={2}
+                style={[s.small, { textAlign: "center", fontSize: 12 }]}
+              >
+                {achievementText(bloom)}
+              </Text>
+            </View>
             <Button
               title="꽃말 카드 저장·공유 · 무료"
               secondary
@@ -1076,19 +1054,19 @@ const s = StyleSheet.create({
     width: "100%",
     maxWidth: 480,
     alignSelf: "center",
-    backgroundColor: palette.cream,
+    backgroundColor: "#f4f3e9",
   },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingTop: 8,
+    paddingBottom: 4,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   brand: {
-    fontSize: 25,
-    fontWeight: "800",
+    fontSize: 23,
+    fontWeight: "700",
     color: palette.ink,
     letterSpacing: -1,
   },
@@ -1140,8 +1118,8 @@ const s = StyleSheet.create({
     backgroundColor: "#fffef9",
   },
   button: {
-    backgroundColor: palette.sage,
-    borderRadius: 16,
+    backgroundColor: "#4b6b50",
+    borderRadius: 18,
     padding: 16,
     minHeight: 52,
     alignItems: "center",
@@ -1162,22 +1140,28 @@ const s = StyleSheet.create({
   link: { color: palette.sage, fontWeight: "600", padding: 10 },
   nav: {
     flexDirection: "row",
-    borderTopWidth: 1,
-    borderColor: palette.line,
-    backgroundColor: palette.cream,
+    marginHorizontal: 14,
+    marginBottom: 8,
+    padding: 5,
+    borderRadius: 25,
+    backgroundColor: "#fffdf5",
+    shadowColor: "#516446",
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
   navItem: {
     flex: 1,
-    paddingVertical: 12,
-    gap: 5,
+    paddingVertical: 8,
+    gap: 4,
     alignItems: "center",
     minHeight: 56,
   },
   navText: { fontSize: 11, color: palette.muted },
   navActive: {
-    backgroundColor: "#edf0e4",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: "#e9eedd",
+    borderRadius: 20,
   },
   gardenHeading: {
     flexDirection: "row",
@@ -1205,7 +1189,14 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  segmentActive: { backgroundColor: "#fffdf6" },
+  segmentActive: {
+    backgroundColor: "#fffdf6",
+    shadowColor: "#576649",
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
+  },
   segmentText: { fontSize: 13, color: "#8a967f" },
   segmentTextActive: { color: "#49664d", fontWeight: "600" },
   quote: {
@@ -1215,6 +1206,7 @@ const s = StyleSheet.create({
     textAlign: "center",
     marginVertical: 8,
   },
+  bloomMemory: { alignItems: "center", paddingVertical: 8, gap: 4 },
   record: { backgroundColor: "#f0f1e6", borderRadius: 18, padding: 16, gap: 8 },
   error: { backgroundColor: "#f4e2d3", padding: 16 },
 });

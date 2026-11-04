@@ -50,6 +50,6 @@ test("Pages 하위 경로에서 설치 자산과 오프라인 기록 보존", as
     .click();
   await page.reload();
   await page.getByRole("tab", { name: "실행", exact: true }).click();
-  await expect(page.getByText("지금은 여백으로 두어도 좋아요.")).toBeVisible();
+  await expect(page.getByText("잠시, 여백을 누려요.")).toBeVisible();
   expect(errors).toEqual([]);
 });

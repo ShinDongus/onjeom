@@ -8,6 +8,7 @@ import {
   View,
 } from "react-native";
 import FlowerArt from "./FlowerArt";
+import Svg, { Path, Ellipse } from "react-native-svg";
 export type GardenItem = {
   id: string;
   name: string;
@@ -37,9 +38,9 @@ export default function GardenPager({
     () => Array.from({ length: count }, (_, i) => i),
     [count],
   );
-  const art = Math.min(60, Math.max(38, ((width - 40) / 3) * 0.62));
+  const art = Math.min(76, Math.max(48, ((width - 24) / 3) * 0.74));
   const cellHeight = Math.ceil((art * 215) / 160 + 34),
-    height = cellHeight * 3 + 40;
+    height = cellHeight * 3 + 42;
   const go = (next: number) => {
     const target = Math.max(0, Math.min(count - 1, next));
     setPage(target);
@@ -100,10 +101,41 @@ export default function GardenPager({
             <View
               testID={`garden-page-${sheet}`}
               accessibilityLabel={`${label} ${sheet + 1}페이지`}
-              style={{ width, padding: 12, gap: 8 }}
+              style={{
+                width,
+                paddingHorizontal: 10,
+                paddingTop: 14,
+                paddingBottom: 20,
+                gap: 4,
+              }}
             >
               {[0, 1, 2].map((row) => (
                 <View key={row} style={s.row}>
+                  <View pointerEvents="none" style={s.shelf}>
+                    <Svg
+                      width="100%"
+                      height="40"
+                      viewBox="0 0 330 40"
+                      preserveAspectRatio="none"
+                      aria-hidden
+                    >
+                      <Ellipse
+                        cx="165"
+                        cy="32"
+                        rx="149"
+                        ry="7"
+                        fill="#718263"
+                        opacity=".1"
+                      />
+                      <Path d="M15 4H315L330 17H0Z" fill="#d9ccb0" />
+                      <Path d="M0 17H330V25H0Z" fill="#bba685" />
+                      <Path d="M0 17H330" stroke="#eae0ca" strokeWidth="1.5" />
+                      <Path
+                        d="M21 25H29V33H21ZM301 25H309V33H301Z"
+                        fill="#a9987c"
+                      />
+                    </Svg>
+                  </View>
                   {[0, 1, 2].map((col) => {
                     const index = sheet * 9 + row * 3 + col;
                     const item = items[index];
@@ -116,7 +148,11 @@ export default function GardenPager({
                         onPress={() => onSelect(item.id)}
                         style={({ pressed }) => [
                           s.cell,
-                          { height: cellHeight, opacity: pressed ? 0.65 : 1 },
+                          {
+                            height: cellHeight,
+                            opacity: pressed ? 0.75 : 1,
+                            transform: [{ translateY: pressed ? 2 : 0 }],
+                          },
                         ]}
                       >
                         <FlowerArt
@@ -140,8 +176,8 @@ export default function GardenPager({
                         importantForAccessibility="no-hide-descendants"
                         style={[s.cell, s.empty, { height: cellHeight }]}
                       >
-                        <FlowerArt stage={0} size={art * 0.65} />
-                        <Text style={s.emptyText}>기다리는 자리</Text>
+                        <FlowerArt stage={0} size={art} />
+                        <Text style={s.emptyText}>빈 화분</Text>
                       </View>
                     );
                   })}
@@ -183,21 +219,24 @@ export default function GardenPager({
   );
 }
 const s = StyleSheet.create({
-  container: { gap: 12 },
+  container: { gap: 16 },
   frame: {
     width: "100%",
     borderRadius: 28,
     overflow: "hidden",
-    backgroundColor: "#eaf0e2",
+    backgroundColor: "#e7eada",
+    borderWidth: 1,
+    borderColor: "#dce1ce",
   },
-  row: { flexDirection: "row", gap: 8 },
+  row: { flexDirection: "row", gap: 2 },
+  shelf: { position: "absolute", bottom: 22, left: 0, right: 0, height: 40 },
   cell: {
     flex: 1,
     minWidth: 0,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 20,
-    backgroundColor: "#f9faf3",
+    backgroundColor: "transparent",
     paddingHorizontal: 3,
   },
   name: {
@@ -207,9 +246,9 @@ const s = StyleSheet.create({
     alignSelf: "stretch",
     textAlign: "center",
   },
-  note: { fontSize: 10, lineHeight: 15, color: "#81917a" },
-  empty: { backgroundColor: "rgba(249,250,243,.35)", opacity: 0.55 },
-  emptyText: { fontSize: 10, color: "#899780", marginTop: 12 },
+  note: { fontSize: 9, lineHeight: 15, color: "#718168" },
+  empty: { opacity: 0.35 },
+  emptyText: { fontSize: 10, color: "#899780", marginTop: 0, lineHeight: 32 },
   controls: {
     flexDirection: "row",
     alignItems: "center",
@@ -221,7 +260,7 @@ const s = StyleSheet.create({
     minHeight: 44,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#eeeade",
+    backgroundColor: "#e5e9d9",
     borderRadius: 22,
   },
   arrowText: { fontSize: 29, color: "#49674e", lineHeight: 32 },

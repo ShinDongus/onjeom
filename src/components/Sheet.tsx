@@ -4,9 +4,12 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
+  View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 type Props = {
   visible: boolean;
   onClose: () => void;
@@ -19,6 +22,7 @@ export default function Sheet({
   children,
   opacity = 1,
 }: Props) {
+  const insets = useSafeAreaInsets();
   return (
     <Modal
       visible={visible}
@@ -30,7 +34,32 @@ export default function Sheet({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={s.overlay}
       >
-        <Animated.View accessibilityViewIsModal style={[s.panel, { opacity }]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="시트 닫기"
+          onPress={onClose}
+          style={StyleSheet.absoluteFill}
+        />
+        <Animated.View
+          testID="bottom-sheet"
+          accessibilityViewIsModal
+          style={[
+            s.panel,
+            { opacity, paddingBottom: Math.max(insets.bottom, 14) },
+          ]}
+        >
+          <View style={s.top}>
+            <View style={s.handle} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="닫기"
+              onPress={onClose}
+              style={s.close}
+            >
+              <View style={s.crossA} />
+              <View style={s.crossB} />
+            </Pressable>
+          </View>
           <ScrollView
             style={s.scroll}
             contentContainerStyle={s.content}
@@ -46,17 +75,51 @@ export default function Sheet({
 const s = StyleSheet.create({
   overlay: {
     flex: 1,
-    justifyContent: "center",
-    backgroundColor: "rgba(40,62,52,.38)",
-    padding: 24,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(30,49,35,.32)",
+    paddingTop: 32,
   },
   panel: {
     width: "100%",
-    maxWidth: 600,
-    maxHeight: "92%",
+    maxWidth: 480,
+    maxHeight: "94%",
     alignSelf: "center",
     flexShrink: 1,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    backgroundColor: "#fffdf5",
+    shadowColor: "#203821",
+    shadowOpacity: 0.15,
+    shadowRadius: 26,
+    shadowOffset: { width: 0, height: -8 },
+    elevation: 12,
+    overflow: "hidden",
   },
-  scroll: { borderRadius: 28, backgroundColor: "#fbf8ef", flexGrow: 0 },
-  content: { padding: 24, gap: 12 },
+  top: { height: 36, alignItems: "center", justifyContent: "center" },
+  handle: { width: 32, height: 4, borderRadius: 3, backgroundColor: "#d4dbc9" },
+  close: {
+    position: "absolute",
+    right: 9,
+    top: 0,
+    width: 44,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  crossA: {
+    position: "absolute",
+    width: 12,
+    height: 1.5,
+    backgroundColor: "#89967d",
+    transform: [{ rotate: "45deg" }],
+  },
+  crossB: {
+    position: "absolute",
+    width: 12,
+    height: 1.5,
+    backgroundColor: "#89967d",
+    transform: [{ rotate: "-45deg" }],
+  },
+  scroll: { flexGrow: 0 },
+  content: { paddingHorizontal: 24, paddingTop: 0, paddingBottom: 16, gap: 12 },
 });

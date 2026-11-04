@@ -58,3 +58,13 @@ GitHub Actions 실행 https://github.com/ShinDongus/onjeom/actions/runs/41661230
 시작 화면·입력/검토 시트·아이콘 탭·3×3 가상화 정원·꽃 상세 시트를 구현함. npm test 31개, npm run test:mobile 5개, npm run test:pages 1개, TypeScript 검사와 iOS/Android Hermes 번들 생성 통과. 12송이에서 첫 페이지 9송이, 다음 페이지 3송이+빈자리6칸, 빈 정원9칸, 페이지 경계 버튼, 실제 가로 휠 스크롤, 화면 크기 변경, 상세 기록, 광고 취소 보존 및 백업 복구를 확인함. 스크린샷 mobile-today.png, mobile-garden.png, mobile-garden-page2.png, desktop-home.png를 직접 검토함. 브라우저 가로 스크롤을 테스트했고 실물 iOS/Android 터치 스와이프는 미검증. 원본 아카이브·도메인·저장 스키마는 변경하지 않음.
 
 모바일 개편 배포 확인: 소스 cc6f1f1, Pages 배포 e2fb2ab6e5b330c77b745584691f8b730d03b862. GitHub 실행 https://github.com/ShinDongus/onjeom/actions/runs/41759436012 에서 최신 배포 커밋과 built 상태가 일치하고 공개 HTML이 해당 커밋의 index.html과 동일함을 확인함. 새 web index-207b8968a5a68b1e0fc3e227b2d3c445.js, 설치 파일·아이콘·매니페스트 모두 HTTP200. 결과 커밋 9c14283b146a3d49d46d4e6d15f77c04a3f589f5. 공개 사이트 전체 기능은 기존 로컬 브라우저 회귀검증과 구분하며 실물 터치 스와이프는 미검증.
+
+## 온실 공간 UI 개편 — 2026-11-04
+
+사용자 요청에 따라 홈을 창문·빛·원근 받침대와 하단 행동 패널로, 실행을 한 가지 주 행동으로, 정원을 3×3 화분 선반으로 개편했다. 입력/상세는 하단 시트, 개화는 조명 배경과 중앙 꽃말을 사용한다. 원본 프로토타입·순수 도메인·저장 형식은 수정하지 않았다. 비교 후보 공식 사이트/스토어는 환경 네트워크 HTTP403으로 직접 조사하지 못했으며 접근에 필요한 도메인을 기존 초안에 보존·추가했다. 조사 완료나 런타임 허용으로 간주하지 않는다. 판단 근거와 남은 조사는 docs/design-review.md에 기록했다.
+
+실행 결과: npm test **31개 통과**; npm run test:mobile **6개 통과**; npm run test:pages **1개 통과**. 총 **38개**, 최종 실행 실패·스킵 없음. 최초 UI 실행에서 장식 체크 기호가 완료 버튼의 접근성 이름에 섞여 두 테스트가 타임아웃됐고 명시적인 접근성 이름으로 수정한 뒤 전체 UI를 재실행해 통과했다. 빈 실행 화면 문구가 바뀐 두 테스트의 기대 문구도 갱신했다. 기존 사용자 흐름 검증을 제거하지 않았다.
+
+추가 검증은 320×640에서 생각 입력·완료 주 버튼이 탭 위에 노출되는지, 시트의 하단 고정 위치, 닫았다 다시 열었을 때 초안 유지, 홈에서 이어 하기, 실제 작은 단계 분할과 전환을 검사한다. 기존 9+3송이 페이지·빈자리·가로 스크롤·복원/손상 보호·광고 취소·오프라인 기록 유지도 통과했다. 스크린샷 mobile-today.png, mobile-today-active.png, mobile-focus.png, mobile-garden.png, mobile-garden-page2.png, mobile-bloom.png를 직접 검토했다.
+
+npm run check, npm run format:check, iOS/Android Hermes 번들 생성 통과. 실제 iPhone/Safari 설치·터치·키보드·큰 글꼴·스크린리더, 네이티브 런타임/SQLite 실행은 이번에 수행하지 않았다. 원본 기반 별도 PWA의 Chromium 4개 테스트는 이번 UI 변경 범위 밖으로 재실행하지 않았으며 원본 무결성과 도메인은 31개 테스트에 포함했다. 공식 앱 화면 직접 조사도 미완료다.

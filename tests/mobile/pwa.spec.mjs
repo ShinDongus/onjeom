@@ -42,5 +42,5 @@ test("홈 화면 설치 메타데이터와 캐시된 앱의 오프라인 실행�
     .click();
   await page.reload();
   await page.getByRole("tab", { name: "실행", exact: true }).click();
-  await expect(page.getByText("지금은 여백으로 두어도 좋아요.")).toBeVisible();
+  await expect(page.getByText("잠시, 여백을 누려요.")).toBeVisible();
 });

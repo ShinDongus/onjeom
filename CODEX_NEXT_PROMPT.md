@@ -12,7 +12,7 @@
 
 다음은 실기기 iOS/Android SQLite 재실행 복원·구버전 마이그레이션·파일 공유/복구·큰 글꼴·VoiceOver/TalkBack QA입니다. 현재 Expo SDK54이며 최신 Expo Go 호환성과 SDK 업그레이드는 별도 확인하세요. npm run export는 실기기 실행이 아닙니다. 실제 SDK·계정이 제공되기 전 테스트 광고 버튼을 실보상이나 실제 구매 권한으로 사용하지 마세요.
 
-React Native UI도 브라우저에서 실행할 수 있습니다. npm run mobile:web 또는 npm run export:preview + npm run preview:mobile을 사용하세요. 이 경로는 App.tsx를 공유하지만 IndexedDB와 브라우저 파일 API를 쓰는 미리보기이며 실기기 SQLite와 동기화하지 않습니다. npm run test:mobile의 실제 UI 3개 시나리오를 유지하세요. 12종 벡터·성장 단계·무료 SVG 카드·작은 화면 공통 Sheet는 src/components 및 flower-art/flower-card 모듈에 있습니다. 원본 아카이브는 수정하지 마세요.
+React Native UI도 브라우저에서 실행할 수 있습니다. npm run mobile:web 또는 npm run export:preview + npm run preview:mobile을 사용하세요. 이 경로는 App.tsx를 공유하지만 IndexedDB와 브라우저 파일 API를 쓰는 미리보기이며 실기기 SQLite와 동기화하지 않습니다. npm run test:mobile의 실제 UI 6개 시나리오를 유지하세요. 12종 벡터·성장 단계·무료 SVG 카드·작은 화면 공통 Sheet는 src/components 및 flower-art/flower-card 모듈에 있습니다. 원본 아카이브는 수정하지 마세요.
 
 Android Gradle은 표시 이름 `온점.`의 마지막 마침표를 프로젝트 이름에 허용하지 않습니다. plugins/withAndroidProjectName.cjs가 내부 프로젝트만 Onjeom으로 설정하므로 제거하지 마세요. APK 빌드에는 JDK17과 API36, build-tools36.0.0, NDK27.1.12297006, CMake3.22.1이 필요합니다. npm run apk:android는 로컬 arm64 미리보기이며 스토어 릴리스가 아닙니다.
 
@@ -31,3 +31,5 @@ GitHub 내부 설정 자동화도 실행했습니다. `.github/workflows/configu
 최신 UI: HomeScreen은 입력 폼 대신 화분과 단일 작업 중심이며 생각 입력/규칙 분리/사용자 검토는 compose Sheet에 있습니다. GardenPager는 3×3(페이지당9칸) 가상화 FlatList와 스와이프/이전·다음 제어를 제공합니다. 꽃별 정보·무료 카드·도감 등록은 선택한 꽃의 상세 Sheet로 옮겼습니다. 이전의 전체 꽃 카드 목록으로 되돌리지 마세요. native UI 테스트는 5개이고 정원 페이징·빈칸·복구·광고취소를 유지하세요. 저장 스키마는 v3 그대로입니다.
 
 3×3 정원과 새 HomeScreen은 실제 사이트에 배포됐습니다. 최신 검증 실행 41759436012, 배포 e2fb2ab6e5b330c77b745584691f8b730d03b862, web bundle index-207b8968a5a68b1e0fc3e227b2d3c445.js입니다. verify-live-pages는 이제 gh-pages 최신 커밋이 빌드될 때까지 기다리고 공개 HTML이 실제 커밋의 HTML과 일치하는지 확인하므로 오래된 배포를 성공으로 오인하지 않습니다.
+
+최신 온실 UI: HomeScreen(온실+행동 패널), FocusScreen(한 가지 실행), GardenScene(계절 SVG 공간), GardenPager(3×3 선반), FlowerPortrait(개화/상세), Sheet(하단 고정). 도메인/DB/원본은 변경하지 않았습니다. tests/mobile/garden.spec.mjs는 320px 주 버튼 위치, 초안 닫기/다시 열기, 홈 이어 하기, 작은 단계 실제 전환도 검사합니다. 경쟁 앱의 최신 화면은 App Store/공식 도메인 접근이 차단돼 미확인입니다. docs/design-review.md의 한계를 유지하고 직접 조사했다고 쓰지 마세요. 필요한 도메인은 기존 설정을 보존해 환경 초안에 추가했으며 저장/게시 전 런타임 허용으로 간주하지 마세요.
