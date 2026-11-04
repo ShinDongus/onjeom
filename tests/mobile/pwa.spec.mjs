@@ -37,6 +37,9 @@ test("홈 화면 설치 메타데이터와 캐시된 앱의 오프라인 실행�
     page.getByRole("heading", { name: "오프라인에서 할 일" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "완료했어요", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "잠시, 여백을 누려요.", exact: true }),
+  ).toBeVisible();
   await page.reload();
   await expect(
     page.getByRole("button", { name: "한 걸음 시작하기", exact: true }),

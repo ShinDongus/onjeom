@@ -18,6 +18,10 @@ type Props = {
   completed: { id: string; title: string }[];
   thought: string;
   latestThought?: string;
+  mood?: string | null;
+  onAI?: () => void;
+  onCancelAI?: () => void;
+  aiBusy?: boolean;
   saved: boolean;
   busy: boolean;
   onChange: (value: string) => void;
@@ -35,6 +39,10 @@ export default function HomeScreen({
   completed,
   thought,
   latestThought,
+  mood,
+  onAI,
+  onCancelAI,
+  aiBusy,
   saved,
   busy,
   onChange,
@@ -73,7 +81,9 @@ export default function HomeScreen({
         </View>
         <BotanicalSticker size={61} species="cosmos" />
       </View>
-      <Text style={s.motto}>반듯하지 않은 하루도, 나의 한 페이지.</Text>
+      <Text style={s.motto}>
+        반듯하지 않은 하루도, 나의 한 페이지.{mood ? ` · ${mood}` : ""}
+      </Text>
       <View style={s.writing}>
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
           {Array.from({ length: Math.floor(writingHeight / 30) }, (_, i) => (
@@ -96,6 +106,7 @@ export default function HomeScreen({
           }
           placeholderTextColor="#929786"
           multiline
+          editable={!busy}
           value={thought}
           onChangeText={onChange}
           maxLength={10000}
@@ -136,6 +147,19 @@ export default function HomeScreen({
           <Text style={s.organizeText}>생각 정리하기 →</Text>
         </Pressable>
       </View>
+      {!!onAI && (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={aiBusy ? "AI 요청 취소" : "연결한 AI로 정리하기"}
+          disabled={!aiBusy && (busy || !thought.trim())}
+          onPress={aiBusy ? onCancelAI : onAI}
+          style={diary.quiet}
+        >
+          <Text style={s.tinyLink}>
+            {aiBusy ? "AI 정리 중…" : "연결한 AI로 정리하기 · 선택"}
+          </Text>
+        </Pressable>
+      )}
       <View style={s.daily}>
         <View style={s.taskArea}>
           <View style={s.sectionHeading}>

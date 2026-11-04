@@ -45,7 +45,15 @@ Expo SDK 54와 호환되는 Expo Go 또는 개발 빌드를 사용합니다. 최
 
 실제 광고/결제 SDK·구매 권한 검증은 없습니다. 모든 관련 화면에 테스트 모드를 표시하고 비용을 청구하지 않습니다. 무료 사용자가 **새 품종+색상 조합을 최초 등록하기로 선택한 순간에만** 보상 테스트를 제안합니다. 동일 조합은 광고 없이 등록하며 PLUS 데모도 우회합니다. 취소·미제공은 미등록 꽃을 유지합니다. 개화와 꽃말 카드에는 광고가 없습니다.
 
-실제 SDK 연결 전에는 테스트 성공 버튼을 실제 보상 증거로 사용하지 마세요. AI 서버는 연결하지 않았습니다. `src/separator.mjs`의 비동기 `separate(text)`를 향후 동의·서버 인증·오류 처리를 갖춘 어댑터로 교체할 수 있습니다. 작업 원문을 광고/분석에 보내지 않습니다.
+실제 SDK 연결 전에는 테스트 성공 버튼을 실제 보상 증거로 사용하지 마세요. 기본 `src/separator.mjs`는 기기 내 규칙 정리입니다. 선택형 `src/groq-client.mjs`와 인증 백엔드도 보존했으며 실제 서버/키가 구성되기 전에는 라이브 AI 동작을 보장하지 않습니다. 작업 원문을 광고/분석에 보내지 않습니다.
+
+## Groq AI 생각 정리 — 선택형 연결(키/서버 설정 전 비활성)
+
+기존 규칙 기반 생각 분리와 별도로, **Groq AI로 정리하기** 기능을 추가했습니다. 사용자가 버튼을 누를 때만 현재 생각을 Groq 전용 백엔드로 보내고, 제안된 할 일은 수정·제외·확인 후 저장합니다. **실제 Groq 키와 Vercel 서버를 아직 연결하지 않았으므로 AI가 현재 작동하는 상태라고 주장하지 않습니다.**
+
+연동 문서: [docs/GROQ_SETUP.md](docs/GROQ_SETUP.md). Groq 키는 서버 환경변수에만 저장해야 하며 앱·공개 저장소·채팅에 입력하지 않습니다. 기존 꽃·씨앗·일기 데이터 및 오프라인 분리는 그대로 동작합니다.
+
+설정에서 본인 서버와 별도 접근 코드를 입력하면 오늘 화면에 선택형 AI 버튼이 나타납니다. 전송 동의를 따로 확인하며, 연결 정보는 메모리에만 둡니다. 기본 정리는 연결 없이 동작합니다.
 
 ## 원본 웹 기록을 모바일로 옮기기
 
@@ -71,7 +79,7 @@ Expo SDK 54와 호환되는 Expo Go 또는 개발 빌드를 사용합니다. 최
 npm test                   # 원본 11개 포함 총 31개 도메인/SQLite/무결성 테스트
 npm run test:original       # 첨부 원본 테스트 11개 그대로 실행
 npm run test:browser        # 원본 기반 PWA 사용자 흐름 4개
-npm run test:mobile         # 실제 React Native UI·PWA 사용자 흐름 8개 (웹 번들 자동 생성)
+npm run test:mobile         # 실제 React Native UI·PWA 사용자 흐름 9개 (웹 번들 자동 생성)
 npm run check              # TypeScript
 npm run format:check       # 원본 폴더는 포맷 대상에서 제외
 npm run export             # iOS·Android Hermes 번들, 설치 파일은 아님
@@ -167,13 +175,13 @@ npm run apk:android
 
 ### 저장 호환성
 
-기존 `thoughts/tasks/flowers`·완료 수·성장 상태·수익화 설정과 DB `user_version=3`은 유지했습니다. 상태 JSON에 선택형 `diary[YYYY-MM-DD] = { draft, note, updatedAt }`만 추가합니다. `src/diary.mjs`가 날짜별 조회와 달력을 담당하고 기존 마이그레이션 경로가 이 필드의 형식/날짜/길이를 검증합니다. 필드가 없는 기존 v1/v2/v3 기록도 그대로 읽으며, 잘못된 다이어리는 조용히 버리지 않고 복원을 거절합니다. 새 필드는 SQLite/IndexedDB 저장과 JSON 백업·삭제에 함께 포함됩니다. 예전 앱 버전에서 새 기록을 수정하는 하위 호환까지 보장하지 않으므로 백업 후 최신 소스를 사용하세요.
+기존 `thoughts/tasks/flowers`·완료 수·성장 상태·수익화 설정과 DB `user_version=3`은 유지했습니다. 원격에서 병행 추가된 `journals[day] = { text, mood, updatedAt }`도 유지하고, 선택형 `diary[YYYY-MM-DD] = { draft, note, updatedAt }`를 함께 지원합니다. 이전 긴 일기/기분은 날짜별 페이지에서 읽고 수정할 수 있습니다. `src/diary.mjs`가 날짜별 조회와 달력을 담당하고 기존 마이그레이션 경로가 이 필드의 형식/날짜/길이를 검증합니다. 필드가 없는 기존 v1/v2/v3 기록도 그대로 읽으며, 잘못된 다이어리는 조용히 버리지 않고 복원을 거절합니다. 새 필드는 SQLite/IndexedDB 저장과 JSON 백업·삭제에 함께 포함됩니다. 예전 앱 버전에서 새 기록을 수정하는 하위 호환까지 보장하지 않으므로 백업 후 최신 소스를 사용하세요.
 
 날짜는 현재 기기의 현지 시간대로 조회합니다. 원본에 없던 날짜나 삭제된 과거 작업을 추정하지 않습니다. 이 환경의 SQLite 파일 재열기 검증은 실물 iOS/Android 재부팅 검증과 다릅니다.
 
 ### 변경 파일과 캡처
 
-`App.tsx`는 네 탭·보조 동선·저장을 연결합니다. `HomeScreen`, `FocusScreen`, `GardenPager`, `CatalogScreen`, `RecordsScreen`, `DiaryPaper`, `diary-theme`이 화면과 스타일을 담당합니다. `src/diary.mjs`와 `mobile-domain.mjs`는 선택 필드 검증/날짜 조회를, 기존 `storage.mjs`와 플랫폼 어댑터는 저장을 담당합니다. 새 DB 테이블이나 의존성은 추가하지 않았습니다. `tests/diary.test.mjs`, `tests/storage.test.mjs`, `tests/mobile/diary.spec.mjs`와 기존 UI 테스트가 검증합니다.
+`App.tsx`는 네 탭·보조 동선·저장을 연결합니다. `HomeScreen`, `FocusScreen`, `GardenPager`, `CatalogScreen`, `RecordsScreen`, `PaperTexture`, `diary-theme`이 화면과 스타일을 담당합니다. `src/diary.mjs`와 `mobile-domain.mjs`는 선택 필드 검증/날짜 조회를, 기존 `storage.mjs`와 플랫폼 어댑터는 저장을 담당합니다. 새 DB 테이블이나 의존성은 추가하지 않았습니다. `tests/diary.test.mjs`, `tests/storage.test.mjs`, `tests/mobile/diary.spec.mjs`와 기존 UI 테스트가 검증합니다.
 
 `docs/screenshots/`에 홈·생각 입력·검토·실행·정원·도감·달력·날짜별 기록·짧은 기록 캡처와 이전 홈/정원/실행을 보관합니다. 390×844의 테스트용 예시 데이터이며 개인 실제 기록이 아닙니다. `npm run test:mobile`로 최신 캡처를 다시 만듭니다. `docs/ui-review.html`은 로컬에서 열 수 있는 비교 페이지이며 Pages 빌드 시 `/review/`로 복사합니다. 비교 이미지는 앱의 오프라인 사전 캐시에 넣지 않습니다.
 

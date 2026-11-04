@@ -13,6 +13,7 @@ const routes = new Map([
   ...[
     "mobile-domain",
     "diary",
+    "journal",
     "legacy-mobile",
     "seasonal",
     "season-calendar",

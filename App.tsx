@@ -44,6 +44,8 @@ import {
   editTask,
   reorderTask,
 } from "./src/mobile-domain.mjs";
+import { groqSeparate } from "./src/groq-client.mjs";
+import { saveJournal } from "./src/journal.mjs";
 import { ruleSeparator } from "./src/separator.mjs";
 
 type Task = { id: string; title: string; status: string; order: number };
@@ -69,6 +71,10 @@ type State = {
   premiumDemo: boolean;
   settings: { reduceMotion: boolean };
   thoughts: { id: string; original: string; createdAt: string }[];
+  journals?: Record<
+    string,
+    { text: string; mood: string | null; updatedAt: string }
+  >;
   diary?: Record<string, { draft: string; note: string; updatedAt: string }>;
 };
 const subject = (name: string) =>
@@ -135,6 +141,12 @@ function Onjeom() {
   const [tab, setTab] = useState("오늘"),
     [thought, setThought] = useState(""),
     [draft, setDraft] = useState<string[] | null>(null);
+  const [groqUrl, setGroqUrl] = useState("");
+  const [groqAccess, setGroqAccess] = useState("");
+  const [groqBusy, setGroqBusy] = useState(false);
+  const [groqConsent, setGroqConsent] = useState(false);
+  const [draftSource, setDraftSource] = useState("rules");
+  const groqAbortRef = useRef<AbortController | null>(null);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [returnTab, setReturnTab] = useState("오늘");
   const openAux = (name: string) => {
@@ -187,6 +199,9 @@ function Onjeom() {
         const today = localDate();
         if (today !== dayRef.current) {
           dayRef.current = today;
+          groqAbortRef.current?.abort();
+          setGroqBusy(false);
+          setGroqConsent(false);
           setDay(today);
           setThought(stateRef.current.diary?.[today]?.draft || "");
           setDraft(null);
@@ -201,6 +216,11 @@ function Onjeom() {
   }, []);
   useEffect(() => {
     scroll.current?.scrollTo({ y: 0, animated: false });
+    if (tab !== "오늘") {
+      groqAbortRef.current?.abort();
+      setGroqBusy(false);
+      setGroqConsent(false);
+    }
   }, [tab]);
   useEffect(() => {
     const back = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -344,6 +364,9 @@ function Onjeom() {
       setSelectedId(null);
       setUnknown(false);
       setEditingId(null);
+      groqAbortRef.current?.abort();
+      setGroqBusy(false);
+      setGroqConsent(false);
       setNoteDrafts({});
       setError("");
     } catch (e) {
@@ -360,10 +383,41 @@ function Onjeom() {
     const next = await saveThought();
     if (!next) return;
     try {
-      if (draft === null) setDraft(await ruleSeparator.separate(thought));
+      if (draft === null) {
+        setDraft(await ruleSeparator.separate(thought));
+        setDraftSource("rules");
+      }
       setCompose(true);
     } catch (e) {
       setError(message(e));
+    }
+  };
+  const organizeWithGroq = async () => {
+    if (groqBusy || busyRef.current) return;
+    const source = thought;
+    const controller = new AbortController();
+    groqAbortRef.current = controller;
+    setGroqBusy(true);
+    try {
+      const next = await saveThought();
+      if (!next || controller.signal.aborted) return;
+      const items = await groqSeparate(source, {
+        endpoint: groqUrl.trim(),
+        accessToken: groqAccess,
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      setDraft(items);
+      setDraftSource("groq");
+      setCompose(true);
+      setError("");
+    } catch (e) {
+      if (!controller.signal.aborted) setError(message(e));
+    } finally {
+      if (groqAbortRef.current === controller) {
+        groqAbortRef.current = null;
+        setGroqBusy(false);
+      }
     }
   };
   const todayRecord = diaryDay(state, day);
@@ -439,9 +493,23 @@ function Onjeom() {
                   remaining={active.length}
                   completed={todayRecord.completed}
                   thought={thought}
-                  latestThought={todayRecord.thoughts.at(-1)?.original}
+                  latestThought={
+                    todayRecord.thoughts.at(-1)?.original ||
+                    state.journals?.[day]?.text
+                  }
+                  mood={state.journals?.[day]?.mood}
+                  onAI={
+                    groqUrl && groqAccess
+                      ? () => setGroqConsent(true)
+                      : undefined
+                  }
+                  aiBusy={groqBusy}
+                  onCancelAI={() => {
+                    groqAbortRef.current?.abort();
+                    setGroqBusy(false);
+                  }}
                   saved={thought === (state.diary?.[day]?.draft || "")}
-                  busy={busy}
+                  busy={busy || groqBusy}
                   onChange={(value) => {
                     setThought(value);
                     setDraft(null);
@@ -521,6 +589,9 @@ function Onjeom() {
                   }
                   onPageChange={() =>
                     scroll.current?.scrollTo({ y: 0, animated: false })
+                  }
+                  onSaveJournal={(date, text, mood) =>
+                    void commit((s) => saveJournal(s, date, { text, mood }))
                   }
                   onSave={(date, note) =>
                     void commit((s) => setDiaryEntry(s, date, { note }))
@@ -605,6 +676,46 @@ function Onjeom() {
                     </Text>
                   </View>
                   <View style={s.card}>
+                    <Text style={s.subtitle}>선택형 AI 연결 · Groq</Text>
+                    <Text style={s.small}>
+                      기본은 기기 안의 규칙 정리예요. 연결하면 오늘 화면에서
+                      따로 요청할 수 있어요. 실제 전송 전에 동의를 다시
+                      확인합니다. 연결 정보는 이번 실행에만 유지돼요.
+                    </Text>
+                    <TextInput
+                      accessibilityLabel="Groq 백엔드 주소"
+                      placeholder="https://내-서버.vercel.app/api/organize"
+                      value={groqUrl}
+                      onChangeText={setGroqUrl}
+                      autoCorrect={false}
+                      autoCapitalize="none"
+                      style={s.input}
+                    />
+                    <TextInput
+                      accessibilityLabel="온점 서버 접근 코드"
+                      placeholder="서버의 온점. 접근 코드"
+                      value={groqAccess}
+                      onChangeText={setGroqAccess}
+                      secureTextEntry
+                      autoCorrect={false}
+                      autoCapitalize="none"
+                      style={s.input}
+                    />
+                    <Text style={s.small}>
+                      Groq API 키는 앱에 입력하지 마세요. 본인 백엔드의 서버
+                      전용 키로 설정하세요. 기본 사용에는 연결이 필요하지
+                      않습니다.
+                    </Text>
+                    <Button
+                      title="연결 정보 지우기"
+                      secondary
+                      onPress={() => {
+                        setGroqUrl("");
+                        setGroqAccess("");
+                      }}
+                    />
+                  </View>
+                  <View style={s.card}>
                     <Text style={s.subtitle}>내 기기에만 남는 기록</Text>
                     <Text style={s.body}>
                       할 일과 꽃은 자동 저장해요. 다이어리 글은 저장 버튼으로
@@ -649,6 +760,7 @@ function Onjeom() {
                 key={name}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: activeTab === name }}
+                aria-selected={activeTab === name}
                 onPress={() => setTab(name)}
                 style={[s.navItem, activeTab === name && s.navActive]}
               >
@@ -672,6 +784,27 @@ function Onjeom() {
           </View>
         </>
       )}
+      <Sheet visible={groqConsent} onClose={() => setGroqConsent(false)}>
+        <Text style={s.title}>이번 생각만 AI로 보낼까요?</Text>
+        <Text style={s.body}>
+          현재 입력한 생각만 본인의 백엔드를 거쳐 Groq로 전송됩니다.
+          일기·꽃·기존 기록은 자동 전송하지 않아요. 결과는 직접 검토한 뒤
+          확정합니다.
+        </Text>
+        <Button
+          title="이번 생각만 AI로 보내기"
+          disabled={groqBusy || busy}
+          onPress={() => {
+            setGroqConsent(false);
+            void organizeWithGroq();
+          }}
+        />
+        <Button
+          title="보내지 않고 돌아가기"
+          secondary
+          onPress={() => setGroqConsent(false)}
+        />
+      </Sheet>
       <Sheet visible={compose} onClose={() => setCompose(false)}>
         <Text accessibilityRole="header" style={s.title}>
           {draft === null ? "생각을 꺼내놓아요." : "내가 정하는 한 걸음"}
@@ -680,7 +813,9 @@ function Onjeom() {
         {draft !== null && (
           <>
             <Text style={s.small}>
-              규칙으로 나눈 메모예요. 직접 다듬은 뒤 시작해요.
+              {draftSource === "groq"
+                ? "Groq AI가 제안한 메모예요. 입력과 맞는지 직접 검토한 뒤 시작해요."
+                : "규칙으로 나눈 메모예요. 직접 다듬은 뒤 시작해요."}
             </Text>
             <Text style={s.small}>지금 할 수 있는 일만 남겨도 좋아요.</Text>
             {draft.map((text, i) => (

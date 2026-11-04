@@ -55,6 +55,9 @@ test("Pages 하위 경로에서 설치 자산과 오프라인 기록 보존", as
     page.getByRole("heading", { name: "아이폰에서 첫 한 걸음" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "완료했어요", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "잠시, 여백을 누려요.", exact: true }),
+  ).toBeVisible();
   await page.reload();
   await expect(
     page.getByRole("button", { name: "한 걸음 시작하기", exact: true }),

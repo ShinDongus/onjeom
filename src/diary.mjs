@@ -56,6 +56,7 @@ export function diaryDay(state, day) {
   if (!isDiaryDay(day)) throw Error("기록 날짜를 확인해 주세요.");
   return {
     day,
+    journal: state.journals?.[day] || { text: "", mood: null },
     draft: state.diary?.[day]?.draft || "",
     note: state.diary?.[day]?.note || "",
     thoughts: state.thoughts.filter((t) => recordDay(t.createdAt) === day),
@@ -90,6 +91,7 @@ export function shiftMonth(month, direction) {
 export function recordedDays(state) {
   return new Set(
     [
+      ...Object.keys(state.journals || {}),
       ...Object.keys(state.diary || {}).filter(
         (day) => state.diary[day].draft || state.diary[day].note,
       ),

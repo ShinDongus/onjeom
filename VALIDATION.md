@@ -77,7 +77,7 @@ npm run check, npm run format:check, iOS/Android Hermes 번들 생성 통과. �
 
 기존 thoughts/tasks/flowers와 완료·확률·광고 규칙, DB user_version 3은 유지한다. 선택형 diary[day]의 draft/note/updatedAt만 추가했고 날짜·길이·형식을 검사한다. 원본 아카이브 무결성, v1/v2/v3 복원, 실제 SQLite 재열기·백업/삭제/복원에서 이 필드까지 검증했다. 원본에 없던 날짜나 삭제된 과거 작업은 추정하지 않는다. 저장한 글은 날짜가 바뀌어 앱을 다시 활성화해도 이전 날에 남고, 새 날짜의 초안을 읽는다. 저장하지 않은 글/검토는 앱 종료나 날짜 전환까지 복원을 보장하지 않는다.
 
-최종 실행: npm test **34개**, npm run test:mobile **8개**, npm run test:browser **4개**, npm run test:pages **1개** 통과. 총 **47개**, 최종 실패/스킵 없음. TypeScript·Prettier·git diff 검사와 iOS/Android Hermes 번들 생성도 통과했다. 네이티브 번들 생성은 실제 설치/런타임 검증이 아니다.
+원격 동시 변경 통합 전 실행: npm test **34개**, npm run test:mobile **8개**, npm run test:browser **4개**, npm run test:pages **1개** 통과. 총 **47개**, 최종 실패/스킵 없음. TypeScript·Prettier·git diff 검사와 iOS/Android Hermes 번들 생성도 통과했다. 네이티브 번들 생성은 실제 설치/런타임 검증이 아니다.
 
 모바일 UI 검증은 생각 저장과 재실행, 원문 저장 후 규칙 분리·사용자 검토, 작은 단계, 완료와 개화, 광고 취소/미제공/등록, 씨앗 복원, 손상 백업 거절, 데이터 삭제/복원, 오프라인 완료, 12송이의 9+3 페이지, 320×640 및 390×480의 버튼 접근/스크롤을 포함한다. 추가로 달력의 과거 날짜에서 생각·실제 완료·꽃·짧은 기록을 조회하고, 수정한 기록의 저장 완료를 기다린 뒤 재실행/백업/삭제/복원했다. 도감은 금빛 희귀 색상·개화 날짜·할로윈 시즌 이름을 실제 UI에서 확인했다. 날짜 전환 재활성화도 브라우저 시뮬레이션으로 확인했다.
 
@@ -87,4 +87,14 @@ npm run check, npm run format:check, iOS/Android Hermes 번들 생성 통과. �
 
 미실행/미구현: 실제 iPhone/Safari 홈 설치·소프트웨어 키보드·터치 제스처·큰 글꼴·VoiceOver/TalkBack, 실기기 SQLite 및 앱 재부팅, 실제 광고/결제 SDK, 공식 추석 일정 데이터. 축소 뷰포트는 실제 키보드와 다르며 시스템 공유/파일 선택도 네이티브 실기기 검증이 남았다. App Store 출시·APK/IPA 생성은 수행하지 않았다.
 
-주요 변경: App.tsx, src/components/{HomeScreen,FocusScreen,GardenPager,CatalogScreen,RecordsScreen,DiaryPaper,AppIcon,Sheet,diary-theme}, src/diary.mjs, src/mobile-domain.mjs의 검증 호출. 저장 어댑터는 유지했다. scripts/{serve-web,serve-mobile-preview,export-pages,prepare-iphone-web,prepare-ui-review}, 실행용 web/sw.js는 모듈/비교 문서 제공을 연결한다. tests/diary.test.mjs·storage.test.mjs·mobile/diary.spec.mjs와 기존 모바일/Pages 테스트, README·인계 문서·비교 HTML/캡처를 갱신했다.
+주요 변경: App.tsx, src/components/{HomeScreen,FocusScreen,GardenPager,CatalogScreen,RecordsScreen,PaperTexture,AppIcon,Sheet,diary-theme}, src/diary.mjs, src/mobile-domain.mjs의 검증 호출. 저장 어댑터는 유지했다. scripts/{serve-web,serve-mobile-preview,export-pages,prepare-iphone-web,prepare-ui-review}, 실행용 web/sw.js는 모듈/비교 문서 제공을 연결한다. tests/diary.test.mjs·storage.test.mjs·mobile/diary.spec.mjs와 기존 모바일/Pages 테스트, README·인계 문서·비교 HTML/캡처를 갱신했다.
+
+### 원격 동시 변경을 보존한 최종 통합
+
+게시 직전 원격 feat/expo-onjeom에 추가된 87f562f~7ae4173의 기존 journals 일기/기분, 선택형 Groq 클라이언트/인증 백엔드 및 자동 배포 워크플로우를 발견했다. 이력을 덮어쓰지 않고 병합했다. 종이 배경을 PaperTexture로 분리해 원격 DiaryPaper 및 관련 컴포넌트도 보존했다. 새 UI는 journals의 긴 일기/기분을 읽고 수정하며 새 diary 초안/짧은 기록과 함께 백업·삭제·복원한다. 원본 웹 경로와 캐시에 journal 모듈도 포함했다.
+
+통합 후 npm test **53개**, React Native 웹 UI **9개**, 기존 웹 프로토타입 **4개**, Pages 설치/비교 문서/오프라인 **1개**를 실행해 총 **67개 통과**했다. TypeScript·iOS/Android Hermes 번들·포맷 검사도 통과했다. 기분 선택의 웹 접근성 상태가 Native accessibilityState만으로 노출되지 않아 aria-checked를 보완했다. 씨앗 보관/완료 직후 재실행 테스트도 DB 저장을 반영한 빈 실행 화면까지 기다린 뒤 재접속하도록 수정했다.
+
+추가 UI 검사는 이전 일기/기분을 복원하고 수정한 뒤 짧은 기록과 함께 백업·삭제·복원하는 흐름을 확인한다. 선택형 Groq는 본인 서버/접근 코드를 메모리에 설정하고 현재 입력만 별도 동의 후 보내며, 동의 취소 때 요청 없음, 요청 본문이 현재 입력 하나뿐임, 결과 사용자 검토, 재실행 시 연결 정보가 비어 있음을 모의 HTTP로 검증했다. 실제 Groq 과금 계정·배포 서버·API 키를 연결해 호출하지 않았다. 기본 규칙 분리도 그대로 동작한다.
+
+원격 자동 배포와 로컬 수동 게시가 경합하지 않도록 통합 소스 푸시 후 배포 워크플로우를 사용한다. 공개 사이트·비교 페이지의 실제 응답 검증 결과는 아래 최신 배포 기록에 별도로 남긴다. 원격에 있던 journals/백엔드 기능의 상세는 docs/GROQ_SETUP.md와 기존 테스트를 함께 참고한다.

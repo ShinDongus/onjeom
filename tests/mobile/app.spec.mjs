@@ -75,6 +75,9 @@ test("React Native UI: 검토·완료·개화·취소 보관·등록·재실행�
   await page.getByRole("tab", { name: "오늘", exact: true }).click();
   await button(page, "한 걸음 시작하기").click();
   await button(page, "나중에 하기").click();
+  await expect(
+    page.getByRole("heading", { name: "잠시, 여백을 누려요.", exact: true }),
+  ).toBeVisible();
   await page.reload();
   await button(page, "씨앗 보관함 열기").click();
   await button(page, "다시 꺼내기").click();

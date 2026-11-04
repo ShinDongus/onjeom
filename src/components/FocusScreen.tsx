@@ -6,7 +6,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import { BotanicalSticker } from "./DiaryPaper";
+import { BotanicalSticker } from "./PaperTexture";
 import { diary, ink, line, sage, muted } from "./diary-theme";
 type Props = {
   current?: { title: string };

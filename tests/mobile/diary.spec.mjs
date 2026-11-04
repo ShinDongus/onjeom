@@ -8,6 +8,7 @@ import {
   exportBackup,
   importBackup,
 } from "../../src/mobile-domain.mjs";
+import { saveJournal } from "../../src/journal.mjs";
 import { setDiaryEntry } from "../../src/diary.mjs";
 const button = (page, name) => page.getByRole("button", { name, exact: true });
 test("날짜별 다이어리·희귀/시즌 도감·한 문장 저장·백업 복구와 비교 캡처", async ({
@@ -35,6 +36,10 @@ test("날짜별 다이어리·희귀/시즌 도감·한 문장 저장·백업 �
     );
   for (const flower of state.flowers)
     state = registerFlower(state, flower.id, { reward: "earned-test" });
+  state = saveJournal(state, "2026-06-01", {
+    text: "예전 버전에서 남겨둔 일기",
+    mood: "맑음",
+  });
   state = setDiaryEntry(state, "2026-06-01", {
     note: "햇살을 오래 바라본 날.",
   });
@@ -114,6 +119,17 @@ test("날짜별 다이어리·희귀/시즌 도감·한 문장 저장·백업 �
     path: "docs/screenshots/08-record-page.png",
     fullPage: true,
   });
+  await expect(page.getByLabel("이전 일기 수정")).toHaveValue(
+    "예전 버전에서 남겨둔 일기",
+  );
+  await expect(
+    page.getByRole("checkbox", { name: "그날의 기분 맑음", exact: true }),
+  ).toBeChecked();
+  await page
+    .getByLabel("이전 일기 수정")
+    .fill("이전 일기도 다정하게 이어서 썼어요.");
+  await button(page, "이전 일기 저장").click();
+  await expect(button(page, "이전 일기 저장")).toHaveText("✓ 저장됨");
   await page.getByLabel("짧은 기록", { exact: true }).scrollIntoViewIfNeeded();
   await page.screenshot({ path: "docs/screenshots/09-record-note.png" });
   await page
@@ -127,6 +143,10 @@ test("날짜별 다이어리·희귀/시즌 도감·한 문장 저장·백업 �
   await button(page, "백업 파일 내보내기").click();
   const { readFile } = await import("node:fs/promises");
   const backup = await readFile(await (await download).path(), "utf8");
+  expect(importBackup(backup).journals["2026-06-01"].text).toBe(
+    "이전 일기도 다정하게 이어서 썼어요.",
+  );
+  expect(importBackup(backup).journals["2026-06-01"].mood).toBe("맑음");
   expect(importBackup(backup).diary["2026-06-01"].note).toBe(
     "오늘은 천천히 걸어도 괜찮았어요.",
   );
@@ -176,4 +196,61 @@ test("날짜별 다이어리·희귀/시즌 도감·한 문장 저장·백업 �
     page.getByText("오늘 날짜에 남겨둘 생각", { exact: true }),
   ).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test("선택형 Groq 보존: 전송 동의·현재 입력만 요청·검토와 비영구 연결 정보", async ({
+  page,
+}) => {
+  const requests = [];
+  await page.route(
+    "https://organizer.example.test/api/organize",
+    async (route) => {
+      requests.push(route.request().postDataJSON());
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          provider: "groq",
+          tasks: [{ title: "물 마시기", evidence: "물" }],
+        }),
+      });
+    },
+  );
+  await page.goto("/");
+  await button(page, "설정 열기").click();
+  await page
+    .getByLabel("Groq 백엔드 주소")
+    .fill("https://organizer.example.test/api/organize");
+  await page
+    .getByLabel("온점 서버 접근 코드")
+    .fill("test-access-code-only-123456789");
+  await page.getByRole("tab", { name: "오늘", exact: true }).click();
+  await page.getByLabel("자유로운 생각 입력").fill("물 한 잔 마시기");
+  await button(page, "연결한 AI로 정리하기").click();
+  await expect(
+    page.getByText("이번 생각만 AI로 보낼까요?", { exact: true }),
+  ).toBeVisible();
+  expect(requests).toEqual([]);
+  await button(page, "보내지 않고 돌아가기").click();
+  expect(requests).toEqual([]);
+  await button(page, "연결한 AI로 정리하기").click();
+  await button(page, "이번 생각만 AI로 보내기").click();
+  await expect(page.getByLabel("할 일 1 수정", { exact: true })).toHaveValue(
+    "물 마시기",
+  );
+  expect(requests).toEqual([{ text: "물 한 잔 마시기" }]);
+  await expect(
+    page.getByText(
+      "Groq AI가 제안한 메모예요. 입력과 맞는지 직접 검토한 뒤 시작해요.",
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await button(page, "한 걸음 모드 시작").click();
+  await expect(
+    page.getByRole("heading", { name: "물 마시기", exact: true }),
+  ).toBeVisible();
+  await page.reload();
+  await button(page, "설정 열기").click();
+  await expect(page.getByLabel("Groq 백엔드 주소")).toHaveValue("");
+  await expect(page.getByLabel("온점 서버 접근 코드")).toHaveValue("");
 });

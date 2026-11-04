@@ -4,6 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { saveJournal } from "../src/journal.mjs";
 import { setDiaryEntry } from "../src/diary.mjs";
 import { createStore } from "../src/storage.mjs";
 import {
@@ -46,6 +47,7 @@ test("실제 SQLite: 마이그레이션, 재실행 복원, 광고 취소 꽃 보
       draft: "정리할 생각",
       note: "오래 기억할 하루",
     });
+    s = saveJournal(s, "2026-06-01", { text: "이어온 일기", mood: "맑음" });
     await store.save(s);
     db.close();
     db = adapter(path);

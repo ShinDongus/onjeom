@@ -6,6 +6,7 @@ import {
   recordedDays,
   shiftMonth,
 } from "../diary.mjs";
+import { MOODS } from "../journal.mjs";
 import { BotanicalSticker } from "./PaperTexture";
 import { diary, ink, line, muted, sage } from "./diary-theme";
 export default function RecordsScreen({
@@ -16,6 +17,7 @@ export default function RecordsScreen({
   onNoteChange,
   onPageChange,
   onSave,
+  onSaveJournal,
   onFlower,
   onSeeds,
 }: {
@@ -26,6 +28,7 @@ export default function RecordsScreen({
   onNoteChange: (day: string, value: string) => void;
   onPageChange: () => void;
   onSave: (day: string, note: string) => void;
+  onSaveJournal: (day: string, text: string, mood: string | null) => void;
   onFlower: (id: string) => void;
   onSeeds: () => void;
 }) {
@@ -34,10 +37,12 @@ export default function RecordsScreen({
   useEffect(() => {
     onPageChange();
   }, [selected]);
+  const [journalEdits, setJournalEdits] = useState<Record<string, string>>({});
   const marked = recordedDays(state),
     record = selected ? diaryDay(state, selected) : null;
   if (record && selected) {
     const note = notes[selected] ?? record.note;
+    const journalText = journalEdits[selected] ?? record.journal.text;
     return (
       <View style={diary.page} testID="record-page">
         <View style={s.row}>
@@ -57,7 +62,9 @@ export default function RecordsScreen({
             페이지
           </Text>
         </View>
-        {!record.draft &&
+        {!record.journal.text &&
+          !record.journal.mood &&
+          !record.draft &&
           !record.thoughts.length &&
           !record.completed.length &&
           !record.flowers.length &&
@@ -111,6 +118,71 @@ export default function RecordsScreen({
             </View>
           </View>
         )}
+        {!!record.journal.text && (
+          <View style={diary.section}>
+            <Text style={diary.heading}>이어온 일기</Text>
+            <TextInput
+              accessibilityLabel="이전 일기 수정"
+              value={journalText}
+              onChangeText={(value) =>
+                setJournalEdits((s) => ({ ...s, [selected]: value }))
+              }
+              multiline
+              maxLength={10000}
+              style={s.note}
+              textAlignVertical="top"
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="이전 일기 저장"
+              disabled={busy || journalText === record.journal.text}
+              onPress={() =>
+                onSaveJournal(selected, journalText, record.journal.mood)
+              }
+              style={diary.quiet}
+            >
+              <Text style={s.back}>
+                {journalText === record.journal.text ? "✓ 저장됨" : "일기 저장"}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+        <View style={diary.section}>
+          <Text style={diary.small}>
+            그날의 기분 · 선택해도, 비워두어도 괜찮아요.
+          </Text>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
+            {MOODS.map((mood: string) => (
+              <Pressable
+                key={mood}
+                accessibilityRole="checkbox"
+                accessibilityLabel={`그날의 기분 ${mood}`}
+                aria-checked={record.journal.mood === mood}
+                accessibilityState={{
+                  checked: record.journal.mood === mood,
+                  disabled: busy,
+                }}
+                disabled={busy}
+                onPress={() =>
+                  onSaveJournal(
+                    selected,
+                    journalText,
+                    record.journal.mood === mood ? null : mood,
+                  )
+                }
+                style={[
+                  diary.quiet,
+                  record.journal.mood === mood && {
+                    backgroundColor: "#e6ebd8",
+                    borderRadius: 12,
+                  },
+                ]}
+              >
+                <Text style={diary.small}>{mood}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
         <View style={diary.section}>
           <Text style={diary.heading}>오늘을 붙잡는 한 문장</Text>
           <TextInput

@@ -8,6 +8,7 @@ const CORE = [
   "/src/logic.mjs",
   "/src/mobile-domain.mjs",
   "/src/diary.mjs",
+  "/src/journal.mjs",
   "/src/legacy-mobile.mjs",
   "/src/seasonal.mjs",
   "/src/season-calendar.mjs",

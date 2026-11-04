@@ -80,3 +80,17 @@ test("달력: 윤년/요일/연도 경계와 현지 날짜, 없는 과거 날짜
     else process.env.TZ = oldTZ;
   }
 });
+
+test("원격에 추가된 journals 일기·기분과 새 다이어리 확장을 함께 보존", async () => {
+  const { saveJournal } = await import("../src/journal.mjs");
+  let s = saveJournal(initialState(), "2026-11-03", {
+    text: "이전에 남긴 긴 일기",
+    mood: "맑음",
+  });
+  s = setDiaryEntry(s, "2026-11-03", { draft: "새 생각", note: "짧은 문장" });
+  const restored = importBackup(exportBackup(s));
+  assert.deepEqual(restored.journals, s.journals);
+  assert.equal(diaryDay(restored, "2026-11-03").journal.mood, "맑음");
+  assert.equal(diaryDay(restored, "2026-11-03").draft, "새 생각");
+  assert.equal(recordedDays(restored).has("2026-11-03"), true);
+});
