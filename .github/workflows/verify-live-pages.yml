@@ -1,5 +1,5 @@
 name: Verify live Onjeom site
-# Verify published diary-first UI and matching GitHub Pages artifact after release.
+# Verify Groq opt-in UI and matching published GitHub Pages artifact after release.
 on:
   push:
     branches: [feat/expo-onjeom]
