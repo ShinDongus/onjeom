@@ -31,7 +31,7 @@ export default function MemoryGarden({flowers,progress,season,onSelect}:{flowers
       </View>:
       <View style={s.flowers}>
        {items.map((f,i)=><Pressable key={f.id} accessibilityRole="button" accessibilityLabel={f.name+" 꽃말 보기"} onPress={()=>onSelect(f.id)}
-          style={[s.plant,{left:(5+(i%3)*31)+"%",top:(7+Math.floor(i/3)*22)+"%"}]}>
+          style={[s.plant,{left:`${5+(i%3)*31}%` as `${number}%`,top:`${7+Math.floor(i/3)*22}%` as `${number}%`}]}>
          <FlowerArt species={f.speciesId} color={f.color} stage={4} size={74}/>
          <Text style={s.plantLabel} numberOfLines={1}>{f.name}</Text>
        </Pressable>)}
