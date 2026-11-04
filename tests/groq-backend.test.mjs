@@ -91,7 +91,8 @@ test("overlong text and invalid JSON are refused before contacting Groq", async 
   const response = await handleOrganize(request("가".repeat(4001)), {
     env, fetchImpl: () => { throw Error("not called"); }
   });
-  assert.equal(response.status, 400);
+  // UTF-8 multibyte payload crosses the earlier byte-size guard.
+  assert.equal(response.status, 413);
   const malformed = await handleOrganize(new Request("https://x.test/api/organize", {
     method: "POST", headers: {"Content-Type":"application/json","Authorization":"Bearer "+env.ONJEOM_ACCESS_TOKEN},
     body: "{"
