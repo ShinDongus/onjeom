@@ -1,0 +1,66 @@
+name: Verify live Onjeom site
+on:
+  push:
+    branches: [feat/expo-onjeom]
+    paths: [.github/workflows/verify-live-pages.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const fs = require('node:fs');
+            const { owner, repo } = context.repo;
+            const url = 'https://shindongus.github.io/onjeom/';
+            const result = { sourceSha: context.sha, runUrl: `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`, siteUrl: url, verified: false, checks: [] };
+            try {
+              const site = (await github.request('GET /repos/{owner}/{repo}/pages', { owner, repo })).data;
+              result.settings = { status: site.status, source: site.source, buildType: site.build_type, htmlUrl: site.html_url };
+              const build = (await github.request('GET /repos/{owner}/{repo}/pages/builds/latest', { owner, repo })).data;
+              result.build = { status: build.status, commit: build.commit };
+              if (build.status !== 'built') throw Error('Pages build is not complete');
+              async function get(path) {
+                const target = new URL(path, url);
+                if (target.origin !== new URL(url).origin || !target.pathname.startsWith('/onjeom/')) throw Error('Unexpected asset URL');
+                const response = await fetch(target, { cache: 'no-store' });
+                result.checks.push({ path: target.pathname, status: response.status, type: response.headers.get('content-type') });
+                if (!response.ok) throw Error('Public app asset failed');
+                return response;
+              }
+              const html = await (await get('./')).text();
+              if (!html.includes('/onjeom/_expo/') || !html.includes('manifest.webmanifest')) throw Error('Unexpected app HTML');
+              const manifest = await (await get('manifest.webmanifest')).json();
+              if (manifest.display !== 'standalone' || manifest.name !== '온점.') throw Error('Install manifest is invalid');
+              await get('apple-touch-icon.png');
+              await get('sw.js');
+              for (const match of html.matchAll(/<script[^>]+src=["']([^"']+)["']/g)) await get(match[1]);
+              result.verified = true;
+              result.phase = 'ready';
+              core.info(`Verified live app: ${url}`);
+            } catch (error) {
+              result.phase = 'failed';
+              result.apiStatus = error.status || null;
+              result.reason = error.status ? `GitHub Pages API returned HTTP ${error.status}` : error.message;
+              core.setFailed(result.reason);
+            } finally {
+              fs.writeFileSync('.github/pages-live-status.json', JSON.stringify(result, null, 2) + '\n');
+            }
+      - name: Record verification
+        if: always()
+        env:
+          REPORT_BRANCH: ${{ github.ref_name }}
+        run: |
+          if [ ! -f .github/pages-live-status.json ]; then exit 1; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/pages-live-status.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'chore: record live site verification [skip ci]'
+          git push origin HEAD:"$REPORT_BRANCH"
