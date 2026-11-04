@@ -88,3 +88,49 @@ test("client rejects accidental secret Groq API key submission", async () => {
     /Groq API 키/,
   );
 });
+test("structured Groq suggestions retain nested actions; malformed child payload is rejected", async () => {
+  const fetchImpl = async () => ({
+    ok: true,
+    json: async () => ({
+      provider: "groq",
+      tasks: [
+        {
+          title: "서류 제출",
+          evidence: "서류 제출",
+          children: [
+            { title: "파일 열기", children: [{ title: "폴더 열기" }] },
+            { title: "제출하기" },
+          ],
+        },
+      ],
+    }),
+  });
+  const result = await groqSeparate("서류 제출", {
+    endpoint,
+    accessToken: auth,
+    structured: true,
+    fetchImpl,
+  });
+  assert.deepEqual(result, [
+    "서류 제출",
+    "  파일 열기",
+    "    폴더 열기",
+    "  제출하기",
+  ]);
+  await assert.rejects(
+    groqSeparate("서류 제출", {
+      endpoint,
+      accessToken: auth,
+      structured: true,
+      fetchImpl: async () => ({
+        ok: true,
+        json: async () => ({
+          provider: "groq",
+          tasks: [
+            { title: "서류 제출", evidence: "서류 제출", children: "bad" },
+          ],
+        }),
+      }),
+    }),
+  );
+});

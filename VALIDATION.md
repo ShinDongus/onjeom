@@ -100,3 +100,15 @@ npm run check, npm run format:check, iOS/Android Hermes 번들 생성 통과. �
 원격 자동 배포와 로컬 수동 게시가 경합하지 않도록 통합 소스 푸시 후 배포 워크플로우를 사용한다. 공개 사이트·비교 페이지의 실제 응답 검증 결과는 아래 최신 배포 기록에 별도로 남긴다. 원격에 있던 journals/백엔드 기능의 상세는 docs/GROQ_SETUP.md와 기존 테스트를 함께 참고한다.
 
 최신 공개 배포 확인: 통합 소스 ae095a58ae20dc28b72fc680087a2e01dab41a65가 자동 배포되어 gh-pages a2200c19b3a09468d350385ca871695d3c4f883d에 반영됐다. 검증 실행 https://github.com/ShinDongus/onjeom/actions/runs/41776879709 의 sourceSha는 50e44efdf471d12b1585a2dc1fcbb44863512c0d이고 expectedCommit/build.commit이 해당 배포 SHA와 일치한다. verified=true, phase=ready, build.status=built를 확인했다. 공개 HTML은 최신 배포의 index.html과 동일하며 새 web index-703f0d55305c31ec0d37375608ffe221.js, 설치 자산, /review/ 비교 페이지와 새 화면 PNG 9개가 HTTP200/올바른 MIME으로 응답했다. 결과 커밋 121e0f39dc6d610876155e1e4362c92a8fea8233를 수신했다. 공개 HTTP 검증과 로컬 기능 테스트이며 실물 iPhone 검증은 별도다.
+
+## 2026-11-04 작은 행동 흐름 검증 (이번 브랜치)
+
+- 고정된 package-lock.json으로 npm ci 설치 후 Node 24.22.1 / Windows / Expo 54에서 검증.
+- 기본 자동 테스트 60/60 통과: 기존 원본·꽃 확률·광고 취소/중복·SQLite에 더해 계층, 이중 보상 방지, 삭제 시 완료 기록 보존, v3→v4 및 손상 트리 거절, Groq 중첩 제안 검증.
+- TypeScript 검사 통과.
+- 실제 Expo web 정적 빌드 성공 (343 modules), 설치용 manifest와 서비스 워커 생성 완료.
+- 실제 Google Chrome / Playwright 화면 테스트 3/3 통과: 생각 보관→검토→재분해→말단 완료→목표 자동 완료, 오프라인 재접속/저장, 320px 회고·정원·도감, 네 번째 행동 개화, 광고 취소 시 꽃 보존, 파일 선택을 통한 계층 백업 복원.
+- [홈](docs/action-screens/action-home.png), [한 행동 실행](docs/action-screens/action-focus.png), [작업 트리](docs/action-screens/action-tree.png), [개화](docs/action-screens/action-bloom.png) 실제 화면 캡처를 보관.
+- 기본 테스트 진입점 test:mobile은 새 제품 흐름으로 전환. 이전 일기 홈 전용 테스트는 test:mobile:legacy로 보관되며 이번 새 화면에 대한 통과를 주장하지 않음.
+- 실제 Groq 운영 요청, iOS/Android 기기 설치, VoiceOver/TalkBack, 스토어 배포는 수행하지 않음. 공개 GitHub Pages와 Groq 프로덕션 서버를 변경하지 않음.
+- 기존 의존성 설치 시 npm audit가 27개(낮음 1/중간 24/높음 2)를 보고함. 이번 변경에서 Expo 의존성을 자동 업그레이드하지 않음.

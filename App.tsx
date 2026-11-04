@@ -44,11 +44,28 @@ import {
   editTask,
   reorderTask,
 } from "./src/mobile-domain.mjs";
+import ActionHome from "./src/components/ActionHome";
+import { actionableTasks, taskPath } from "./src/mobile-domain.mjs";
+import {
+  rulePlan,
+  addPlan,
+  removePlanBranch,
+  movePlanBranch,
+  shiftPlanBranch,
+  planDepth,
+} from "./src/planner.mjs";
 import { groqSeparate } from "./src/groq-client.mjs";
 import { saveJournal } from "./src/journal.mjs";
 import { ruleSeparator } from "./src/separator.mjs";
 
-type Task = { id: string; title: string; status: string; order: number };
+type Task = {
+  id: string;
+  title: string;
+  status: string;
+  order: number;
+  parentId?: string;
+  aggregate?: boolean;
+};
 type Flower = {
   id: string;
   speciesId: string;
@@ -270,7 +287,7 @@ function Onjeom() {
   const active = state.tasks
     .filter((t) => t.status === "active")
     .sort((a, b) => a.order - b.order);
-  const current = active[0];
+  const current = actionableTasks(state)[0] as Task | undefined;
   const catalogSpecies = [
     ...new Map(
       [
@@ -384,7 +401,7 @@ function Onjeom() {
     if (!next) return;
     try {
       if (draft === null) {
-        setDraft(await ruleSeparator.separate(thought));
+        setDraft(rulePlan(thought));
         setDraftSource("rules");
       }
       setCompose(true);
@@ -405,6 +422,7 @@ function Onjeom() {
         endpoint: groqUrl.trim(),
         accessToken: groqAccess,
         signal: controller.signal,
+        structured: true,
       });
       if (controller.signal.aborted) return;
       setDraft(items);
@@ -442,7 +460,7 @@ function Onjeom() {
         ) : (
           <Text style={s.pageMark}>
             {tab === "오늘"
-              ? "오늘의 다이어리"
+              ? "오늘의 작은 시작"
               : tab === "실행"
                 ? ""
                 : "온점.의 작은 책장"}
@@ -486,18 +504,21 @@ function Onjeom() {
               automaticallyAdjustKeyboardInsets
             >
               {tab === "오늘" && (
-                <HomeScreen
+                <ActionHome
+                  state={state}
                   day={day}
-                  progress={state.progress}
                   current={current}
-                  remaining={active.length}
-                  completed={todayRecord.completed}
+                  busy={busy || groqBusy}
                   thought={thought}
-                  latestThought={
-                    todayRecord.thoughts.at(-1)?.original ||
-                    state.journals?.[day]?.text
-                  }
-                  mood={state.journals?.[day]?.mood}
+                  onChange={(value) => {
+                    setThought(value);
+                    setDraft(null);
+                  }}
+                  onSave={() => void saveThought()}
+                  onOrganize={() => void organize()}
+                  onStart={() => setTab("실행")}
+                  onManage={() => setManage(true)}
+                  onSeeds={() => openAux("씨앗")}
                   onAI={
                     groqUrl && groqAccess
                       ? () => setGroqConsent(true)
@@ -508,22 +529,22 @@ function Onjeom() {
                     groqAbortRef.current?.abort();
                     setGroqBusy(false);
                   }}
-                  saved={thought === (state.diary?.[day]?.draft || "")}
-                  busy={busy || groqBusy}
-                  onChange={(value) => {
-                    setThought(value);
-                    setDraft(null);
-                  }}
-                  onSave={() => void saveThought()}
-                  onOrganize={() => void organize()}
-                  onStart={() => setTab("실행")}
-                  onManage={() => setManage(true)}
-                  onSeeds={() => openAux("씨앗")}
+                  onReflect={async (text, mood) =>
+                    !!(await commit((s) => saveJournal(s, day, { text, mood })))
+                  }
                 />
               )}
               {tab === "실행" && (
                 <FocusScreen
                   current={current}
+                  path={
+                    current
+                      ? taskPath(state.tasks, current.id)
+                          .slice(0, -1)
+                          .map((t: Task) => t.title)
+                          .join(" › ")
+                      : ""
+                  }
                   progress={state.progress}
                   busy={busy}
                   onComplete={() => void complete()}
@@ -718,7 +739,7 @@ function Onjeom() {
                   <View style={s.card}>
                     <Text style={s.subtitle}>내 기기에만 남는 기록</Text>
                     <Text style={s.body}>
-                      할 일과 꽃은 자동 저장해요. 다이어리 글은 저장 버튼으로
+                      할 일과 꽃은 자동 저장해요. 생각과 회고는 저장 버튼으로
                       남겨요. 서버 전송은 없어요. 백업 파일에는 생각과 성취
                       기록이 담기며 암호화되지 않습니다. 안전한 곳에 보관해
                       주세요.
@@ -807,7 +828,7 @@ function Onjeom() {
       </Sheet>
       <Sheet visible={compose} onClose={() => setCompose(false)}>
         <Text accessibilityRole="header" style={s.title}>
-          {draft === null ? "생각을 꺼내놓아요." : "내가 정하는 한 걸음"}
+          {draft === null ? "생각을 꺼내놓아요." : "목표와 작은 행동 검토"}
         </Text>
         {error ? <Text accessibilityRole="alert">{error}</Text> : null}
         {draft !== null && (
@@ -818,16 +839,33 @@ function Onjeom() {
                 : "규칙으로 나눈 메모예요. 직접 다듬은 뒤 시작해요."}
             </Text>
             <Text style={s.small}>지금 할 수 있는 일만 남겨도 좋아요.</Text>
+            <Text style={s.body}>
+              목표 아래 작은 행동을 확인해요. ‘하위로’로 더 작게 나누고
+              ‘상위로’로 꺼낼 수 있어요. 목표를 제외하면 그 아래 행동도 함께
+              제외해요.
+            </Text>
             {draft.map((text, i) => (
-              <View key={i} style={s.record}>
+              <View
+                key={i}
+                style={[
+                  s.record,
+                  {
+                    marginLeft: Math.min(planDepth(text), 3) * 12,
+                    borderLeftWidth: planDepth(text) ? 2 : 0,
+                    borderLeftColor: palette.line,
+                    paddingLeft: 8,
+                  },
+                ]}
+              >
                 <View style={s.row}>
                   <Text style={[s.eyebrow, { flex: 1 }]}>
-                    {String(i + 1).padStart(2, "0")}
+                    {planDepth(text) ? "↳ 하위 행동" : "목표 / 프로젝트"} ·{" "}
+                    {i + 1}
                   </Text>
                   <Pressable
                     accessibilityRole="button"
                     accessibilityLabel={`할 일 ${i + 1} 제외`}
-                    onPress={() => setDraft(draft.filter((_, j) => j !== i))}
+                    onPress={() => setDraft(removePlanBranch(draft, i))}
                     style={{
                       minWidth: 44,
                       minHeight: 44,
@@ -848,7 +886,28 @@ function Onjeom() {
                   }
                   style={s.input}
                 />
-                <View style={[s.row, { justifyContent: "flex-end" }]}>
+                <View
+                  style={[
+                    s.row,
+                    { justifyContent: "flex-end", flexWrap: "wrap" },
+                  ]}
+                >
+                  <Button
+                    title="상위로"
+                    secondary
+                    disabled={!planDepth(text)}
+                    onPress={() => setDraft(shiftPlanBranch(draft, i, -1))}
+                  />
+                  <Button
+                    title="하위로"
+                    secondary
+                    disabled={
+                      !i ||
+                      planDepth(text) >= 7 ||
+                      planDepth(draft[i - 1]) < planDepth(text)
+                    }
+                    onPress={() => setDraft(shiftPlanBranch(draft, i, 1))}
+                  />
                   {[-1, 1].map((direction) => (
                     <Pressable
                       key={direction}
@@ -858,11 +917,7 @@ function Onjeom() {
                         i + direction < 0 || i + direction >= draft.length
                       }
                       onPress={() => {
-                        const next = [...draft];
-                        [next[i], next[i + direction]] = [
-                          next[i + direction],
-                          next[i],
-                        ];
+                        const next = movePlanBranch(draft, i, direction);
                         setDraft(next);
                       }}
                       style={{
@@ -895,11 +950,9 @@ function Onjeom() {
               disabled={busy || !draft.some((x) => x.trim())}
               onPress={() =>
                 void commit((s) =>
-                  setDiaryEntry(
-                    addTasks(s, draft, { original: thought }),
-                    day,
-                    { draft: "" },
-                  ),
+                  setDiaryEntry(addPlan(s, draft, { original: thought }), day, {
+                    draft: "",
+                  }),
                 ).then((next) => {
                   if (next) {
                     setDraft(null);
@@ -913,7 +966,7 @@ function Onjeom() {
           </>
         )}
         <Button
-          title="다이어리로 돌아가기"
+          title="생각으로 돌아가기"
           secondary
           onPress={() => {
             setCompose(false);

@@ -1,10 +1,11 @@
+import { flattenPlan, rulePlan } from "./planner.mjs";
 /**
  * Groq is called only through the user's private, authenticated backend.
  * Neither GROQ_API_KEY nor the access code is stored by this module.
  */
 export async function groqSeparate(
   text,
-  { endpoint, accessToken, fetchImpl = fetch, signal } = {},
+  { endpoint, accessToken, fetchImpl = fetch, signal, structured = false } = {},
 ) {
   if (typeof text !== "string" || !text.trim() || text.trim().length > 4000)
     throw Error("AI 정리는 1~4,000자의 생각을 지원합니다.");
@@ -69,5 +70,26 @@ export async function groqSeparate(
       throw Error("AI 결과가 입력 내용과 일치하지 않습니다.");
     return task.title.trim();
   });
-  return titles;
+  if (!structured) return titles;
+  let count = 0;
+  const validate = (tasks, depth = 0) => {
+    if (!Array.isArray(tasks)) throw Error("AI 단계가 올바르지 않습니다.");
+    if (!tasks.length) return [];
+    if (depth > 7) throw Error("AI 단계가 올바르지 않습니다.");
+    return tasks.map((t) => {
+      if (
+        ++count > 100 ||
+        typeof t.title !== "string" ||
+        !t.title.trim() ||
+        t.title.length > 200
+      )
+        throw Error("AI 단계가 올바르지 않습니다.");
+      return { ...t, children: validate(t.children || [], depth + 1) };
+    });
+  };
+  const plan = validate(result.tasks);
+  // Legacy servers remain usable, with explicitly reviewed offline step suggestions.
+  return plan.some((t) => t.children.length)
+    ? flattenPlan(plan)
+    : titles.flatMap((t) => rulePlan(t));
 }

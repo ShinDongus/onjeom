@@ -20,13 +20,13 @@ import { chuseokAt, CHUSEOK_FLOWER } from "./seasonal.mjs";
 import { validateJournals } from "./journal.mjs";
 export { FLOWERS, SEASONS, RARE_VARIANTS };
 export const SEASONAL = [...SEASONS.map((s) => s.flower), CHUSEOK_FLOWER];
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 export const localDate = todayLocal;
 const uid = () =>
   `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}`;
 export const initialState = () => ({
   ...createInitialState(),
-  version: 3,
+  version: 4,
   journals: {},
   settings: { reduceMotion: false },
 });
@@ -102,13 +102,45 @@ export function reorderTask(state, id, direction) {
 export function changeTask(state, id, action, parts = []) {
   const task = state.tasks.find((t) => t.id === id);
   if (!task || task.status === "done") return state;
-  if (action === "restore") return restoreTask(state, id);
-  if (action === "delete")
-    return { ...state, tasks: state.tasks.filter((t) => t.id !== id) };
+  const ids = descendants(state.tasks, id);
+  if (action === "restore")
+    for (const ancestor of taskPath(state.tasks, id)) ids.add(ancestor.id);
+  if (action === "delete") {
+    const kept = state.tasks.filter(
+      (t) => !ids.has(t.id) || t.status === "done",
+    );
+    const keptIds = new Set(kept.map((t) => t.id));
+    return settleParents({
+      ...state,
+      tasks: kept.map((t) => {
+        if (t.parentId && !keptIds.has(t.parentId)) {
+          const { parentId, ...record } = t;
+          return record;
+        }
+        return t;
+      }),
+    });
+  }
+  if (action === "restore" || action === "archive" || action === "later") {
+    const status = action === "restore" ? "active" : "postponed";
+    const offset = Math.max(-1, ...state.tasks.map((t) => t.order)) + 1;
+    return {
+      ...state,
+      tasks: state.tasks.map((t) =>
+        ids.has(t.id) && t.status !== "done"
+          ? {
+              ...t,
+              status,
+              ...(action === "restore" ? { order: offset + t.order } : {}),
+            }
+          : t,
+      ),
+    };
+  }
   if (task.status !== "active") return state;
-  if (action === "archive" || action === "later")
-    return postponeTask(state, id);
   if (action === "split") {
+    if (state.tasks.some((t) => t.parentId === id))
+      throw Error("기존 하위 행동을 먼저 살펴주세요.");
     const clean = parts.map((t) => t.trim()).filter(Boolean);
     if (
       !clean.length ||
@@ -116,24 +148,22 @@ export function changeTask(state, id, action, parts = []) {
       clean.some((t) => t.length > 500)
     )
       throw Error("작은 단계를 1~500자로 한 줄씩 적어 주세요.");
-    const added = clean.map((title, i) => ({
-      ...task,
-      id: uid(),
-      title,
-      originalTitle: task.originalTitle || task.title,
-      order: task.order + i,
-    }));
+    if (taskPath(state.tasks, id).length >= 8)
+      throw Error("단계는 8단계까지 나눌 수 있어요.");
+    const order = Math.max(-1, ...state.tasks.map((t) => t.order)) + 1;
     return {
       ...state,
-      tasks: state.tasks.flatMap((t) =>
-        t.id === id
-          ? added
-          : [
-              t.order > task.order
-                ? { ...t, order: t.order + added.length - 1 }
-                : t,
-            ],
-      ),
+      tasks: [
+        ...state.tasks,
+        ...clean.map((title, i) => ({
+          ...task,
+          id: uid(),
+          title,
+          originalTitle: task.originalTitle || task.title,
+          parentId: id,
+          order: order + i,
+        })),
+      ],
     };
   }
   throw Error("지원하지 않는 작업입니다.");
@@ -143,8 +173,7 @@ export function completeTask(
   id,
   { day, random = Math.random, calendar, date = new Date() } = {},
 ) {
-  if (!state.tasks.some((t) => t.id === id && t.status === "active"))
-    return state;
+  if (!actionableTasks(state).some((t) => t.id === id)) return state;
   date = day ? new Date(`${day}T12:00:00`) : date;
   day = localDate(date);
   const checkedRandom = () => {
@@ -157,7 +186,8 @@ export function completeTask(
       ? chuseokAt(day, calendar)
       : null;
   const special = event && checkedRandom() < 0.24;
-  const next = finishTask(state, id, checkedRandom, date);
+  const rewarded = finishTask(state, id, checkedRandom, date);
+  const next = settleParents(rewarded);
   const tasks = [
     ...next.tasks.filter((t) => t.id !== id),
     next.tasks.find((t) => t.id === id),
@@ -176,7 +206,7 @@ export function completeTask(
       seasonId: "chuseok",
     };
   const achievements = state.tasks
-    .filter((t) => t.status === "done")
+    .filter((t) => t.status === "done" && !t.aggregate)
     .slice(-3)
     .map((t) => t.title);
   achievements.push(state.tasks.find((t) => t.id === id).title);
@@ -261,11 +291,12 @@ export function migrateState(input) {
       settings: { reduceMotion: input.reduceMotion ?? false },
     };
   else data = input;
+  if (data.version === 3) data = { ...data, version: 4 };
   // v3 releases did not have dated journal entries. Add them without touching any achievements.
   if (data.journals === undefined) data = { ...data, journals: {} };
   validateJournals(data.journals);
   if (
-    data.version !== 3 ||
+    data.version !== 4 ||
     !Array.isArray(data.thoughts) ||
     !Array.isArray(data.tasks) ||
     !Array.isArray(data.flowers) ||
@@ -344,10 +375,11 @@ export function migrateState(input) {
     )
       throw Error("꽃 데이터가 손상되었습니다.");
   }
+  validateTree(data.tasks);
   validateDiary(data.diary);
   // The original exposes deleteTask, including completed records; do not invent missing history.
   if (
-    data.tasks.filter((t) => t.status === "done").length >
+    data.tasks.filter((t) => t.status === "done" && !t.aggregate).length >
       data.completedTotal ||
     data.flowers.length !== Math.floor(data.completedTotal / 4)
   )
@@ -374,4 +406,124 @@ export function importBackup(value) {
   if (parsed.version === 1 && Array.isArray(parsed.thoughts))
     return migrateState(parsed);
   throw Error("온점. 백업 파일이 아닙니다.");
+}
+
+// Additive v3 tree extension: old tasks remain roots; no invented historical links.
+export function descendants(tasks, id) {
+  const ids = new Set([id]);
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const t of tasks)
+      if (t.parentId && ids.has(t.parentId) && !ids.has(t.id)) {
+        ids.add(t.id);
+        changed = true;
+      }
+  }
+  return ids;
+}
+export function taskPath(
+  tasks,
+  id,
+  byId = new Map(tasks.map((t) => [t.id, t])),
+) {
+  const path = [];
+  const seen = new Set();
+  for (let t = byId.get(id); t; t = byId.get(t.parentId)) {
+    if (seen.has(t.id)) throw Error("작업 계층에 순환이 있습니다.");
+    seen.add(t.id);
+    path.unshift(t);
+  }
+  return path;
+}
+export function actionableTasks(state) {
+  const byId = new Map(state.tasks.map((t) => [t.id, t]));
+  const paths = new Map();
+  const path = (id) => {
+    if (!paths.has(id)) paths.set(id, taskPath(state.tasks, id, byId));
+    return paths.get(id);
+  };
+  const parents = new Set(state.tasks.map((t) => t.parentId).filter(Boolean));
+  return state.tasks
+    .filter(
+      (t) =>
+        t.status === "active" &&
+        !parents.has(t.id) &&
+        path(t.id).every((p) => p.status === "active"),
+    )
+    .sort((a, b) => {
+      const ap = path(a.id),
+        bp = path(b.id);
+      for (let i = 0; i < Math.min(ap.length, bp.length); i++) {
+        if (ap[i].order !== bp[i].order) return ap[i].order - bp[i].order;
+      }
+      return 0;
+    });
+}
+export function taskProgress(state, id) {
+  const ids = descendants(state.tasks, id),
+    parents = new Set(state.tasks.map((t) => t.parentId));
+  const leaves = state.tasks.filter((t) => ids.has(t.id) && !parents.has(t.id));
+  return {
+    done: leaves.filter((t) => t.status === "done").length,
+    total: leaves.length,
+  };
+}
+function settleParents(state) {
+  let tasks = state.tasks.map((t) => ({ ...t }));
+  const childMap = new Map();
+  for (const t of tasks)
+    if (t.parentId) {
+      if (!childMap.has(t.parentId)) childMap.set(t.parentId, []);
+      childMap.get(t.parentId).push(t);
+    }
+  const parents = tasks.filter((t) => childMap.has(t.id));
+  for (let pass = 0; pass < 8; pass++)
+    for (const t of parents) {
+      const children = childMap.get(t.id);
+      if (
+        children.length &&
+        t.status !== "done" &&
+        children.every((c) => c.status === "done")
+      ) {
+        t.status = "done";
+        t.aggregate = true;
+        t.finishedAt = children.at(-1).finishedAt;
+      }
+    }
+  return { ...state, tasks };
+}
+function validateTree(tasks) {
+  const byId = new Map(tasks.map((t) => [t.id, t]));
+  const childMap = new Map();
+  for (const t of tasks)
+    if (t.parentId) {
+      if (!childMap.has(t.parentId)) childMap.set(t.parentId, []);
+      childMap.get(t.parentId).push(t);
+    }
+  for (const t of tasks) {
+    if (
+      t.parentId !== undefined &&
+      (typeof t.parentId !== "string" || !byId.has(t.parentId))
+    )
+      throw Error("상위 목표가 없는 작업입니다.");
+    let depth = 0;
+    const seen = new Set();
+    for (let a = t; a; a = byId.get(a.parentId)) {
+      if (seen.has(a.id) || ++depth > 8)
+        throw Error("작업 계층에 순환이 있거나 너무 깊습니다.");
+      seen.add(a.id);
+    }
+    const children = childMap.get(t.id) || [];
+    if (t.aggregate !== undefined && t.aggregate !== true)
+      throw Error("잘못된 목표 완료 표시입니다.");
+    if (children.length && t.status === "done" && !t.aggregate)
+      throw Error("목표 완료 표시가 없습니다.");
+    if (t.aggregate && (!children.length || t.status !== "done"))
+      throw Error("목표 완료 기록이 손상되었습니다.");
+    if (
+      children.length &&
+      (t.status === "done") !== children.every((c) => c.status === "done")
+    )
+      throw Error("상하위 완료 상태가 맞지 않습니다.");
+  }
 }

@@ -74,7 +74,7 @@ test("실제 SQLite: 마이그레이션, 재실행 복원, 광고 취소 꽃 보
     await rm(dir, { recursive: true, force: true });
   }
 });
-test("원본 v1 SQLite 및 payload를 v3로 원자적 마이그레이션", async () => {
+test("원본 v1 SQLite 및 payload를 v4로 원자적 마이그레이션", async () => {
   const db = adapter(":memory:");
   try {
     await db.execAsync(
@@ -87,13 +87,13 @@ test("원본 v1 SQLite 및 payload를 v3로 원자적 마이그레이션", async
     assert.deepEqual(await store.load(), initialState());
     assert.equal(
       (await db.getFirstAsync("PRAGMA user_version")).user_version,
-      3,
+      4,
     );
     assert.equal(
       JSON.parse(
         (await db.getFirstAsync("SELECT payload FROM app_state")).payload,
       ).version,
-      3,
+      4,
     );
   } finally {
     db.close();
@@ -122,7 +122,7 @@ test("마이그레이션 실패 롤백 및 미래 DB 버전 보호", async () =>
   }
 });
 
-test("기존 모바일 DB v2 → v3 및 재오픈, 실패 백업 복원은 기존 데이터 보존", async () => {
+test("기존 모바일 DB v2 → v4 및 재오픈, 실패 백업 복원은 기존 데이터 보존", async () => {
   const {
     initialState: oldInitial,
     addTasks: oldAdd,
@@ -139,12 +139,12 @@ test("기존 모바일 DB v2 → v3 및 재오픈, 실패 백업 복원은 기�
     await db.runAsync("INSERT INTO app_state VALUES(1,?)", JSON.stringify(old));
     const store = await createStore(db);
     const s = await store.load();
-    assert.equal(s.version, 3);
+    assert.equal(s.version, 4);
     assert.equal(s.completedTotal, 4);
     assert.equal(s.flowers.length, 1);
     assert.equal(
       (await db.getFirstAsync("PRAGMA user_version")).user_version,
-      3,
+      4,
     );
     await assert.rejects(() => store.restore("corrupt"));
     assert.deepEqual(await store.load(), s);
@@ -172,7 +172,7 @@ test("손상된 이전 DB도 검증된 백업으로만 명시적 복구, 미래 
     assert.deepEqual(await store.load(), expected);
     assert.equal(
       (await db.getFirstAsync("PRAGMA user_version")).user_version,
-      3,
+      4,
     );
     await db.execAsync("PRAGMA user_version = 99;");
     await assert.rejects(() => recoverStore(db, exportBackup(initialState())));
