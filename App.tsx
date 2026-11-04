@@ -705,6 +705,11 @@ function Onjeom() {
                   secureTextEntry
                   style={s.input}
                 />
+                <Button
+                  title="연결 정보 지우기"
+                  secondary
+                  onPress={() => { setGroqUrl(""); setGroqAccess(""); }}
+                />
               </View>
             )}
             <Text style={s.small}>
