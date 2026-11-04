@@ -32,6 +32,11 @@ export default function AppIcon({
         <>
           <Path d="M12 21v-9M12 13C5 14 3 10 4 5c6 0 9 3 8 8ZM12 15c7 1 9-3 8-8-6 0-9 3-8 8Z" />
         </>
+      ) : name === "기록" ? (
+        <>
+          <Path d="M6 3h10l3 3v15H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" />
+          <Path d="M8 9h8M8 13h8M8 17h5" />
+        </>
       ) : name === "씨앗" ? (
         <>
           <Rect x={4} y={7} width={16} height={13} rx={3} />

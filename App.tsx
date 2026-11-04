@@ -6,6 +6,7 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
+  useWindowDimensions,
   Switch,
   Text,
   TextInput,
@@ -14,9 +15,13 @@ import {
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import FlowerPortrait from "./src/components/FlowerPortrait";
-import HomeScreen from "./src/components/HomeScreen";
+import BloomMoment from "./src/components/BloomMoment";
+import DiaryHome from "./src/components/DiaryHome";
+import DiaryHistory from "./src/components/DiaryHistory";
+import { saveJournal } from "./src/journal.mjs";
 import FocusScreen from "./src/components/FocusScreen";
-import GardenPager from "./src/components/GardenPager";
+import MemoryGarden from "./src/components/MemoryGarden";
+import BotanicalCatalog from "./src/components/BotanicalCatalog";
 import AppIcon from "./src/components/AppIcon";
 import Sheet from "./src/components/Sheet";
 import InstallHint from "./src/components/InstallHint";
@@ -57,6 +62,7 @@ type State = {
   version: number;
   tasks: Task[];
   flowers: Flower[];
+  journals?: Record<string, {text:string; mood:string|null; updatedAt:string}>;
   completedTotal: number;
   progress: number;
   premiumDemo: boolean;
@@ -115,6 +121,8 @@ export default function App() {
   );
 }
 function Onjeom() {
+  const { width } = useWindowDimensions();
+  const wide = width >= 720;
   const [state, setState] = useState<State>(initialState());
   const stateRef = useRef(state);
   const scroll = useRef<ScrollView>(null);
@@ -247,6 +255,9 @@ function Onjeom() {
     const next = await commit((s) => completeTask(s, current.id));
     if (next && next.flowers.length > before) setBloom(next.flowers[0]);
   };
+  const saveDiary = (entryDay: string, text: string, mood: string|null) => {
+    void commit((s) => saveJournal(s,entryDay,{text,mood}));
+  };
   const shareFlower = async (f: Flower) => {
     try {
       await saveTextFile(
@@ -317,7 +328,7 @@ function Onjeom() {
     }
   };
   return (
-    <SafeAreaView style={s.safe}>
+    <SafeAreaView style={[s.safe, wide && s.safeWide]}>
       <StatusBar style="dark" />
       <View style={s.header}>
         <Text accessibilityRole="header" style={s.brand}>
@@ -349,27 +360,28 @@ function Onjeom() {
         </View>
       ) : (
         <>
+          <View style={[s.main, wide && s.mainWide]}>
+            {wide && <View style={s.rail}>
+              {["오늘","실행","정원","기록","씨앗"].map(name=>
+                <Pressable key={name} accessibilityRole="tab" accessibilityState={{selected:tab===name}}
+                  onPress={()=>setTab(name)} style={[s.railItem,tab===name&&s.railActive]}>
+                  <AppIcon name={name} color={tab===name?"#34543C":"#91A18C"}/>
+                  <Text style={[s.railText,tab===name&&s.railTextOn]}>{name}</Text>
+                </Pressable>)}
+            </View>}
           <ScrollView
             ref={scroll}
-            contentContainerStyle={s.content}
+            contentContainerStyle={[s.content,wide&&s.contentWide]}
             keyboardShouldPersistTaps="handled"
           >
             {tab === "오늘" && (
-              <HomeScreen
-                day={day}
-                season={season}
-                progress={state.progress}
-                completed={state.completedTotal}
-                flowers={state.flowers.length}
-                current={current}
-                remaining={active.length}
-                onCompose={() => setCompose(true)}
-                onStart={() => setTab("실행")}
-                onManage={() => setManage(true)}
-                onGarden={() => {
-                  setGardenView("기억");
-                  setTab("정원");
-                }}
+              <DiaryHome day={day} season={season} state={state} current={current}
+                remaining={active.length} progress={state.progress}
+                reduceMotion={state.settings.reduceMotion || systemReduce}
+                onSave={saveDiary} onCompose={()=>setCompose(true)}
+                onStart={()=>setTab("실행")} onComplete={()=>void complete()}
+                onGarden={()=>{setGardenView("기억");setTab("정원");}}
+                onHistory={()=>setTab("기록")}
               />
             )}
             {tab === "실행" && (
@@ -431,60 +443,27 @@ function Onjeom() {
                 </View>
                 {gardenView === "기억" ? (
                   <>
-                    <GardenPager
-                      items={state.flowers.map((f) => ({
-                        id: f.id,
-                        flowerId: f.id,
-                        name: f.name,
-                        speciesId: f.speciesId,
-                        color: f.color,
-                        note:
-                          f.variantName +
-                          " · " +
-                          (f.registeredAt ? "도감에 담김" : "미등록"),
-                      }))}
-                      onSelect={setSelectedId}
-                    />
-                    <Text style={s.gardenNote}>
-                      {state.flowers.length
-                        ? "꽃을 누르면 그날의 작은 이야기가 열려요."
-                        : "아직 빈 자리도 괜찮아요. 작은 행동 끝에 꽃이 찾아올 거예요."}
-                    </Text>
+                    <MemoryGarden flowers={state.flowers} progress={state.progress}
+                      season={season} onSelect={setSelectedId}/>
+                    <Text style={s.gardenNote}>꽃을 누르면 그날의 작은 이야기가 열려요.</Text>
                   </>
                 ) : (
-                  <>
-                    <GardenPager
-                      label="도감"
-                      items={catalogSpecies.map((species: any) => {
-                        const found = state.flowers.filter(
-                          (f) => f.registeredAt && f.speciesId === species.id,
-                        );
-                        return {
-                          id: species.id,
-                          flowerId: found[0]?.id,
-                          name: found.length ? species.name : "미발견",
-                          speciesId: species.id,
-                          color: found[0]?.color || "#bbc6ac",
-                          note: found.length
-                            ? new Set(found.map((f) => f.variantId)).size +
-                              "가지 색상"
-                            : "아직 빈 페이지",
-                        };
-                      })}
-                      onSelect={(id) => {
-                        const found = state.flowers.find(
-                          (f) => f.registeredAt && f.speciesId === id,
-                        );
-                        if (found) setSelectedId(found.id);
-                        else setUnknown(true);
-                      }}
-                    />
-                    <Text style={s.gardenNote}>
-                      꽃말은 온점.의 창작 문구입니다.
-                    </Text>
-                  </>
+                  <BotanicalCatalog
+                    items={catalogSpecies.map((species:any)=>{
+                      const found=state.flowers.filter(f=>f.registeredAt && f.speciesId===species.id);
+                      return {id:species.id,name:species.name,speciesId:species.id,
+                        color:found[0]?.color||"#BBC6AC",foundId:found[0]?.id,
+                        count:new Set(found.map(f=>f.variantId)).size};
+                    })}
+                    onFlower={setSelectedId}
+                    onUnknown={()=>setUnknown(true)}
+                  />
                 )}
               </>
+            )}
+            {tab === "기록" && (
+              <DiaryHistory day={day} state={state} onSave={saveDiary}
+                onOpenFlower={setSelectedId}/>
             )}
             {tab === "씨앗" && (
               <>
@@ -598,8 +577,8 @@ function Onjeom() {
               </>
             )}
           </ScrollView>
-          <View style={s.nav}>
-            {["오늘", "실행", "정원", "씨앗", "설정"].map((name) => (
+          {!wide && <View style={s.nav}>
+            {["오늘", "실행", "정원", "기록", "씨앗"].map((name) => (
               <Pressable
                 key={name}
                 accessibilityRole="tab"
@@ -621,6 +600,7 @@ function Onjeom() {
                 </Text>
               </Pressable>
             ))}
+          </View>}
           </View>
         </>
       )}
@@ -964,9 +944,10 @@ function Onjeom() {
             <Text style={[s.eyebrow, { textAlign: "center", fontSize: 12 }]}>
               당신의 작은 행동 끝에
             </Text>
-            <FlowerPortrait
+            <BloomMoment
               species={bloom.speciesId}
               color={flowerInfo(bloom).color.hex}
+              reduceMotion={state.settings.reduceMotion || systemReduce}
             />
             <Text
               accessibilityRole="header"
@@ -1056,6 +1037,15 @@ const s = StyleSheet.create({
     alignSelf: "center",
     backgroundColor: "#f4f3e9",
   },
+  main: {flex:1},
+  mainWide: {flexDirection:"row"},
+  rail:{width:84,paddingTop:12,paddingHorizontal:7,gap:7,backgroundColor:"#F6F5EC",borderRightWidth:1,borderRightColor:"#E3E6D9"},
+  railItem:{alignItems:"center",justifyContent:"center",gap:5,minHeight:66,borderRadius:18},
+  railActive:{backgroundColor:"#E3EBDF"},
+  railText:{fontSize:11,color:"#899A88"},
+  railTextOn:{color:"#385742",fontWeight:"700"},
+  safeWide:{maxWidth:1280},
+  contentWide:{maxWidth:1100,alignSelf:"stretch"},
   header: {
     paddingHorizontal: 24,
     paddingTop: 8,
