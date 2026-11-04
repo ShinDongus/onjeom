@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="robots" content="noindex,nofollow"/>
+<title>온점. · AI 연결 서버</title>
+<style>
+:root{color-scheme:light;--bg:#f8f7ef;--ink:#293e2d;--sub:#64746a;--line:#d9dfd5;--sage:#42634c}
+*{box-sizing:border-box}body{margin:0;min-height:100dvh;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;display:grid;place-items:center;padding:24px}
+main{width:min(100%,560px);background:#fff;border:1px solid var(--line);border-radius:24px;padding:clamp(24px,6vw,44px);box-shadow:0 8px 32px #15291e0c}
+.eyebrow{font-size:12px;letter-spacing:.1em;font-weight:700;color:var(--sage);margin:0 0 12px}h1{margin:0 0 12px;font-size:clamp(26px,5vw,34px);letter-spacing:-.04em}p{line-height:1.7;margin:0 0 20px;color:var(--sub)}.pill{display:inline-flex;gap:8px;align-items:center;border-radius:999px;background:#eef3ed;color:#355a42;font-size:13px;padding:9px 13px;margin-bottom:20px}.dot{width:8px;height:8px;background:#78a78a;border-radius:50%}
+.card{border:1px solid var(--line);background:#fafbf9;border-radius:14px;padding:18px;margin:0 0 20px}.card strong{font-size:15px;display:block;margin-bottom:8px}.card span{font-size:14px;line-height:1.65;color:var(--sub)}.actions{display:flex;flex-wrap:wrap;gap:10px}a{color:var(--sage);font-weight:650;text-decoration:none;border:1px solid var(--line);border-radius:12px;padding:11px 14px;font-size:14px}a.primary{background:var(--sage);color:white;border-color:var(--sage)}small{display:block;color:#7b897e;margin-top:24px;line-height:1.6}
+</style></head><body><main>
+<p class="eyebrow">ONJEOM · PRIVATE AI BACKEND</p>
+<h1>온점. AI 연결 서버</h1>
+<div class="pill"><span class="dot"></span> Vercel 백엔드 전용 페이지</div>
+<p>이 주소는 온점. 앱에서 Groq AI를 안전하게 호출하기 위한 서버입니다. 일기를 쓰거나 꽃을 키우는 앱 화면은 아래의 <b>온점. 열기</b>에서 사용할 수 있습니다.</p>
+<section class="card" aria-live="polite"><strong>Groq 연결 상태</strong><span id="status">서버 상태를 확인하고 있습니다.</span></section>
+<div class="actions"><a class="primary" href="https://shindongus.github.io/onjeom/">온점. 앱 열기</a><a href="/api/health">서버 상태 JSON 확인</a></div>
+<small>이 페이지에는 API 키가 표시되지 않습니다. 실제 AI 호출은 온점. 앱에서 사용자가 요청하고 별도의 접근 인증을 통과한 경우에만 가능합니다.</small>
+</main>
+<script>
+fetch("/api/health",{cache:"no-store"}).then(async r=>{if(!r.ok)throw Error();return r.json()}).then(d=>{
+ const el=document.getElementById("status");
+ el.textContent=d.status==="configured"
+  ?"서버 환경변수 등록이 감지됐습니다. 실제 AI 요청은 아직 별도 검증이 필요합니다."
+  :"서버가 응답하고 있습니다. Groq API 키 및 접근 코드 등록이 필요합니다.";
+}).catch(()=>{document.getElementById("status").textContent="상태 점검 API에 연결하지 못했습니다. /api/health 경로를 확인해 주세요.";});
+</script></body></html>
