@@ -22,12 +22,14 @@
     "build:android": "expo run:android",
     "mobile:web": "expo start --web",
     "export:preview": "expo export --platform web --output-dir dist-preview && node scripts/prepare-iphone-web.mjs",
-    "test:mobile": "npm run export:preview && playwright test --config playwright.mobile.config.mjs",
+    "test:mobile": "npm run export:preview && playwright test --config playwright.action.config.mjs",
     "preview:mobile": "node scripts/serve-mobile-preview.mjs",
     "apk:android": "node scripts/build-preview-apk.mjs",
     "export:pages": "node scripts/export-pages.mjs",
     "test:pages": "npm run export:pages && playwright test --config playwright.pages.config.mjs",
-    "publish:pages": "npm run export:pages && node scripts/publish-pages.mjs"
+    "publish:pages": "npm run export:pages && node scripts/publish-pages.mjs",
+    "test:actions": "npm run export:preview && playwright test --config playwright.action.config.mjs",
+    "test:mobile:legacy": "npm run export:preview && playwright test --config playwright.mobile.config.mjs"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",

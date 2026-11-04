@@ -61,7 +61,8 @@ export function diaryDay(state, day) {
     note: state.diary?.[day]?.note || "",
     thoughts: state.thoughts.filter((t) => recordDay(t.createdAt) === day),
     completed: state.tasks.filter(
-      (t) => t.status === "done" && recordDay(t.finishedAt) === day,
+      (t) =>
+        t.status === "done" && !t.aggregate && recordDay(t.finishedAt) === day,
     ),
     flowers: state.flowers.filter((f) => recordDay(f.createdAt) === day),
   };
@@ -97,7 +98,7 @@ export function recordedDays(state) {
       ),
       ...state.thoughts.map((t) => recordDay(t.createdAt)),
       ...state.tasks
-        .filter((t) => t.status === "done")
+        .filter((t) => t.status === "done" && !t.aggregate)
         .map((t) => recordDay(t.finishedAt)),
       ...state.flowers.map((f) => recordDay(f.createdAt)),
     ].filter(Boolean),

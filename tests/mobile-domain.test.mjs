@@ -15,6 +15,7 @@ import {
   exportBackup,
   importBackup,
   migrateState,
+  actionableTasks,
 } from "../src/mobile-domain.mjs";
 import { ruleSeparator } from "../src/separator.mjs";
 import * as legacy from "../src/legacy-mobile.mjs";
@@ -175,11 +176,12 @@ test("수정·삭제·순서 변경, 작은 단계 원래 제목 보존 및 현�
   assert.equal(original.activeTask(s).id, id);
   assert.throws(() => changeTask(s, id, "split", [" "]));
   s = changeTask(s, id, "split", ["열기", "한 줄 쓰기"]);
-  assert.equal(original.activeTask(s).title, "열기");
-  assert.equal(s.tasks[0].originalTitle, "수정한 제목");
-  assert.equal(s.tasks.length, 5);
-  s = changeTask(s, s.tasks[0].id, "delete");
-  assert.equal(original.activeTask(s).title, "한 줄 쓰기");
+  assert.equal(actionableTasks(s)[0].title, "열기");
+  assert.equal(actionableTasks(s)[0].originalTitle, "수정한 제목");
+  assert.equal(s.tasks.length, 6);
+  assert.equal(s.tasks.find((t) => t.id === id).title, "수정한 제목");
+  s = changeTask(s, actionableTasks(s)[0].id, "delete");
+  assert.equal(actionableTasks(s)[0].title, "한 줄 쓰기");
   assert.equal(s.completedTotal, 0);
 });
 test("광고 취소·미제공 시 보관, 같은 품종+색상 중복은 무료", () => {
@@ -218,7 +220,7 @@ test("원본 v1 JSON 복원: 생각 원문, 제목·작업 순서·씨앗·날�
     );
   old = original.postponeTask(old, original.activeTask(old).id);
   const migrated = importBackup(JSON.stringify(old));
-  assert.equal(migrated.version, 3);
+  assert.equal(migrated.version, 4);
   assert.deepEqual(migrated.thoughts, old.thoughts);
   assert.deepEqual(migrated.tasks, old.tasks);
   assert.deepEqual(migrated.flowers, old.flowers);

@@ -66,7 +66,10 @@ export function diaryForDay(state, day) {
     day,
     journal: (state.journals || {})[day] || { text: "", mood: null },
     tasks: (state.tasks || []).filter(
-      (task) => task.status === "done" && entryDay(task.finishedAt) === day,
+      (task) =>
+        task.status === "done" &&
+        !task.aggregate &&
+        entryDay(task.finishedAt) === day,
     ),
     flowers: (state.flowers || []).filter(
       (flower) => entryDay(flower.createdAt) === day,
@@ -82,7 +85,7 @@ export function diaryDays(state) {
       [
         ...Object.keys(state.journals || {}),
         ...(state.tasks || [])
-          .filter((t) => t.status === "done")
+          .filter((t) => t.status === "done" && !t.aggregate)
           .map((t) => entryDay(t.finishedAt)),
         ...(state.flowers || []).map((f) => entryDay(f.createdAt)),
       ].filter((d) => isJournalDay(d)),

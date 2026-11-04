@@ -10,6 +10,7 @@ import { BotanicalSticker } from "./PaperTexture";
 import { diary, ink, line, sage, muted } from "./diary-theme";
 type Props = {
   current?: { title: string };
+  path?: string;
   progress: number;
   busy: boolean;
   onComplete: () => void;
@@ -20,6 +21,7 @@ type Props = {
 };
 export default function FocusScreen({
   current,
+  path,
   progress,
   busy,
   onComplete,
@@ -36,9 +38,10 @@ export default function FocusScreen({
         onPress={onBack}
         style={[diary.quiet, { alignSelf: "flex-start" }]}
       >
-        <Text style={s.back}>‹ 오늘의 페이지</Text>
+        <Text style={s.back}>‹ 오늘로</Text>
       </Pressable>
       <Text style={s.eyebrow}>한 걸음 모드</Text>
+      {!!path && <Text style={s.helper}>{path}</Text>}
       <View style={s.task}>
         <Text style={s.number}>하나.</Text>
         <Text accessibilityRole="header" style={s.title}>
@@ -106,7 +109,7 @@ export default function FocusScreen({
           onPress={onCompose}
           style={diary.primary}
         >
-          <Text style={diary.primaryText}>오늘의 다이어리에 적기</Text>
+          <Text style={diary.primaryText}>생각 꺼내기</Text>
         </Pressable>
       )}
     </View>

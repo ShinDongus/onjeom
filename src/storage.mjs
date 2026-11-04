@@ -11,7 +11,7 @@ export async function createStore(db, { recovered = null } = {}) {
   await db.withExclusiveTransactionAsync(async (tx) => {
     const row = await tx.getFirstAsync("PRAGMA user_version");
     const version = row.user_version;
-    if (version > 3)
+    if (version > 4)
       throw Error("새 버전 앱에서 만든 데이터입니다. 앱을 업데이트해 주세요.");
     if (version === 0)
       await tx.execAsync(
@@ -32,6 +32,17 @@ export async function createStore(db, { recovered = null } = {}) {
           JSON.stringify(migrateState(JSON.parse(existing.payload))),
         );
       await tx.execAsync("PRAGMA user_version = 3;");
+    }
+    if (version <= 3) {
+      const existing = await tx.getFirstAsync(
+        "SELECT payload FROM app_state WHERE id = 1",
+      );
+      if (existing && !recovered)
+        await tx.runAsync(
+          "UPDATE app_state SET payload = ? WHERE id = 1",
+          JSON.stringify(migrateState(JSON.parse(existing.payload))),
+        );
+      await tx.execAsync("PRAGMA user_version = 4;");
     }
     if (recovered)
       await tx.runAsync(
