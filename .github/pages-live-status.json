@@ -1,0 +1,52 @@
+{
+  "sourceSha": "13cfe481475d095580749fd375b1efabf313a05c",
+  "runUrl": "https://github.com/ShinDongus/onjeom/actions/runs/41756901625",
+  "siteUrl": "https://shindongus.github.io/onjeom/",
+  "verified": true,
+  "checks": [
+    {
+      "path": "/onjeom/",
+      "status": 200,
+      "type": "text/html; charset=utf-8"
+    },
+    {
+      "path": "/onjeom/manifest.webmanifest",
+      "status": 200,
+      "type": "application/manifest+json; charset=utf-8"
+    },
+    {
+      "path": "/onjeom/apple-touch-icon.png",
+      "status": 200,
+      "type": "image/png"
+    },
+    {
+      "path": "/onjeom/sw.js",
+      "status": 200,
+      "type": "application/javascript; charset=utf-8"
+    },
+    {
+      "path": "/onjeom/_expo/static/js/web/index-12f82a80fd6528bf63df017edbe381a7.js",
+      "status": 200,
+      "type": "application/javascript; charset=utf-8"
+    },
+    {
+      "path": "/onjeom/install.js",
+      "status": 200,
+      "type": "application/javascript; charset=utf-8"
+    }
+  ],
+  "settings": {
+    "status": "built",
+    "source": {
+      "branch": "gh-pages",
+      "path": "/"
+    },
+    "buildType": "legacy",
+    "htmlUrl": "https://shindongus.github.io/onjeom/"
+  },
+  "build": {
+    "status": "built",
+    "commit": "0243779b8cad3d785f8a84c0ec53c7a9c92f09c6"
+  },
+  "phase": "ready"
+}
