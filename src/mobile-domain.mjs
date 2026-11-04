@@ -16,6 +16,7 @@ import {
   flowerInfo as previousFlowerInfo,
 } from "./legacy-mobile.mjs";
 import { chuseokAt, CHUSEOK_FLOWER } from "./seasonal.mjs";
+import { validateJournals } from "./journal.mjs";
 export { FLOWERS, SEASONS, RARE_VARIANTS };
 export const SEASONAL = [...SEASONS.map((s) => s.flower), CHUSEOK_FLOWER];
 export const SCHEMA_VERSION = 3;
@@ -25,6 +26,7 @@ const uid = () =>
 export const initialState = () => ({
   ...createInitialState(),
   version: 3,
+  journals: {},
   settings: { reduceMotion: false },
 });
 export function seasonAt(day) {
@@ -258,6 +260,9 @@ export function migrateState(input) {
       settings: { reduceMotion: input.reduceMotion ?? false },
     };
   else data = input;
+  // v3 releases did not have dated journal entries. Add them without touching any achievements.
+  if (data.journals === undefined) data = { ...data, journals: {} };
+  validateJournals(data.journals);
   if (
     data.version !== 3 ||
     !Array.isArray(data.thoughts) ||
