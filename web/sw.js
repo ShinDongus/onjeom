@@ -1,4 +1,4 @@
-const CACHE = "onjeom-original-integrated-v1";
+const CACHE = "onjeom-original-integrated-v2";
 const CORE = [
   "/",
   "/index.html",
@@ -7,6 +7,7 @@ const CORE = [
   "/src/app.mjs",
   "/src/logic.mjs",
   "/src/mobile-domain.mjs",
+  "/src/diary.mjs",
   "/src/legacy-mobile.mjs",
   "/src/seasonal.mjs",
   "/src/season-calendar.mjs",

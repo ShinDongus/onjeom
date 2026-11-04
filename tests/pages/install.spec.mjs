@@ -7,8 +7,18 @@ test("Pages 하위 경로에서 설치 자산과 오프라인 기록 보존", as
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("./");
   await expect(
-    page.getByRole("button", { name: "생각 꺼내놓기", exact: true }),
+    page.getByRole("button", { name: "생각 정리하기", exact: true }),
   ).toBeVisible();
+  const gallery = await page.request.get("/onjeom/review/");
+  expect(gallery.status()).toBe(200);
+  expect(await gallery.text()).toContain("온점. 하루를 펼치는 다이어리");
+  const screenshot = await page.request.get(
+    "/onjeom/review/screenshots/01-today.png",
+  );
+  expect(screenshot.status()).toBe(200);
+  expect(screenshot.headers()["content-type"]).toBe("image/png");
+  const workerText = await (await page.request.get("/onjeom/sw.js")).text();
+  expect(workerText).not.toContain("./review/");
   const bundles = await page
     .locator("script[src]")
     .evaluateAll((elements) => elements.map((el) => new URL(el.src).pathname));
@@ -29,27 +39,28 @@ test("Pages 하위 경로에서 설치 자산과 오프라인 기록 보존", as
   expect(
     await page.evaluate(() => navigator.serviceWorker.controller.scriptURL),
   ).toContain("/onjeom/sw.js");
-  await page
-    .getByRole("button", { name: "생각 꺼내놓기", exact: true })
-    .click();
   await page.getByLabel("자유로운 생각 입력").fill("아이폰에서 첫 한 걸음");
   await page
-    .getByRole("button", { name: "할 일로 나눠 보기", exact: true })
+    .getByRole("button", { name: "생각 정리하기", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "검토한 할 일 추가", exact: true })
+    .getByRole("button", { name: "한 걸음 모드 시작", exact: true })
     .click();
   await context.setOffline(true);
   await page.reload();
-  await page.getByRole("tab", { name: "실행", exact: true }).click();
+  await page
+    .getByRole("button", { name: "한 걸음 시작하기", exact: true })
+    .click();
   await expect(
     page.getByRole("heading", { name: "아이폰에서 첫 한 걸음" }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "이만큼 해냈어요 · 완료", exact: true })
-    .click();
+  await page.getByRole("button", { name: "완료했어요", exact: true }).click();
   await page.reload();
-  await page.getByRole("tab", { name: "실행", exact: true }).click();
-  await expect(page.getByText("잠시, 여백을 누려요.")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "한 걸음 시작하기", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("checkbox", { name: "아이폰에서 첫 한 걸음", exact: true }),
+  ).toBeVisible();
   expect(errors).toEqual([]);
 });

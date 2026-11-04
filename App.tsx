@@ -3,6 +3,9 @@ import {
   AccessibilityInfo,
   Animated,
   AppState,
+  BackHandler,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -15,6 +18,10 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import FlowerPortrait from "./src/components/FlowerPortrait";
 import HomeScreen from "./src/components/HomeScreen";
+import DiaryPaper from "./src/components/PaperTexture";
+import RecordsScreen from "./src/components/RecordsScreen";
+import CatalogScreen from "./src/components/CatalogScreen";
+import { diaryDay, setDiaryEntry } from "./src/diary.mjs";
 import FocusScreen from "./src/components/FocusScreen";
 import GardenPager from "./src/components/GardenPager";
 import AppIcon from "./src/components/AppIcon";
@@ -61,6 +68,8 @@ type State = {
   progress: number;
   premiumDemo: boolean;
   settings: { reduceMotion: boolean };
+  thoughts: { id: string; original: string; createdAt: string }[];
+  diary?: Record<string, { draft: string; note: string; updatedAt: string }>;
 };
 const subject = (name: string) =>
   name + ((name.charCodeAt(name.length - 1) - 0xac00) % 28 === 0 ? "가" : "이");
@@ -71,8 +80,8 @@ const achievementText = (f: Flower) =>
 const palette = {
   ink: "#283e34",
   muted: "#65776b",
-  sage: "#627e65",
-  cream: "#fbf8ef",
+  sage: "#61785c",
+  cream: "#faf6eb",
   sand: "#eee6d5",
   line: "#d8dfd0",
 };
@@ -126,13 +135,18 @@ function Onjeom() {
   const [tab, setTab] = useState("오늘"),
     [thought, setThought] = useState(""),
     [draft, setDraft] = useState<string[] | null>(null);
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const [returnTab, setReturnTab] = useState("오늘");
+  const openAux = (name: string) => {
+    setReturnTab(["오늘", "정원", "도감", "기록"].includes(tab) ? tab : "오늘");
+    setTab(name);
+  };
   const [confirmation, setConfirmation] = useState<{
     title: string;
     body: string;
     label: string;
     action: () => void;
   } | null>(null);
-  const [gardenView, setGardenView] = useState("기억");
   const [compose, setCompose] = useState(false),
     [selectedId, setSelectedId] = useState<string | null>(null),
     [unknown, setUnknown] = useState(false);
@@ -145,6 +159,8 @@ function Onjeom() {
     [adFlower, setAdFlower] = useState<Flower | null>(null);
   const [systemReduce, setSystemReduce] = useState(false),
     [day, setDay] = useState(localDate());
+  const dayRef = useRef(day);
+  dayRef.current = day;
   const fade = useRef(new Animated.Value(1)).current;
   const load = async () => {
     try {
@@ -152,6 +168,7 @@ function Onjeom() {
       const loaded = await store.current.load();
       stateRef.current = loaded;
       setState(loaded);
+      setThought(loaded.diary?.[localDate()]?.draft || "");
       setReady(true);
       setError("");
     } catch (e) {
@@ -166,7 +183,16 @@ function Onjeom() {
       setSystemReduce,
     );
     const app = AppState.addEventListener("change", (value) => {
-      if (value === "active") setDay(localDate());
+      if (value === "active") {
+        const today = localDate();
+        if (today !== dayRef.current) {
+          dayRef.current = today;
+          setDay(today);
+          setThought(stateRef.current.diary?.[today]?.draft || "");
+          setDraft(null);
+          setCompose(false);
+        }
+      }
     });
     return () => {
       listener.remove();
@@ -176,6 +202,16 @@ function Onjeom() {
   useEffect(() => {
     scroll.current?.scrollTo({ y: 0, animated: false });
   }, [tab]);
+  useEffect(() => {
+    const back = BackHandler.addEventListener("hardwareBackPress", () => {
+      if (["실행", "씨앗", "설정"].includes(tab)) {
+        setTab(tab === "실행" ? "오늘" : returnTab);
+        return true;
+      }
+      return false;
+    });
+    return () => back.remove();
+  }, [tab, returnTab]);
   useEffect(() => {
     if (!bloom || state.settings.reduceMotion || systemReduce) {
       fade.setValue(1);
@@ -299,7 +335,7 @@ function Onjeom() {
       setState(next);
       setReady(true);
       setDraft(null);
-      setThought("");
+      setThought(next.diary?.[day]?.draft || "");
       setBloom(null);
       setAdFlower(null);
       setSplitId(null);
@@ -308,6 +344,7 @@ function Onjeom() {
       setSelectedId(null);
       setUnknown(false);
       setEditingId(null);
+      setNoteDrafts({});
       setError("");
     } catch (e) {
       setError(message(e));
@@ -316,17 +353,51 @@ function Onjeom() {
       setBusy(false);
     }
   };
+  const saveThought = () =>
+    commit((s) => setDiaryEntry(s, day, { draft: thought }));
+  const organize = async () => {
+    if (!thought.trim() || busyRef.current) return;
+    const next = await saveThought();
+    if (!next) return;
+    try {
+      if (draft === null) setDraft(await ruleSeparator.separate(thought));
+      setCompose(true);
+    } catch (e) {
+      setError(message(e));
+    }
+  };
+  const todayRecord = diaryDay(state, day);
+  const activeTab = ["오늘", "정원", "도감", "기록"].includes(tab)
+    ? tab
+    : tab === "실행"
+      ? "오늘"
+      : returnTab;
   return (
     <SafeAreaView style={s.safe}>
       <StatusBar style="dark" />
+      <DiaryPaper />
       <View style={s.header}>
-        <Text accessibilityRole="header" style={s.brand}>
-          온점.
-        </Text>
+        {["설정", "씨앗"].includes(tab) ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setTab(returnTab)}
+            style={s.headerAction}
+          >
+            <Text style={s.small}>‹ 이전</Text>
+          </Pressable>
+        ) : (
+          <Text style={s.pageMark}>
+            {tab === "오늘"
+              ? "오늘의 다이어리"
+              : tab === "실행"
+                ? ""
+                : "온점.의 작은 책장"}
+          </Text>
+        )}
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="설정 열기"
-          onPress={() => setTab("설정")}
+          onPress={() => openAux("설정")}
           style={s.headerAction}
         >
           <AppIcon name="설정" />
@@ -349,272 +420,249 @@ function Onjeom() {
         </View>
       ) : (
         <>
-          <ScrollView
-            ref={scroll}
-            contentContainerStyle={s.content}
-            keyboardShouldPersistTaps="handled"
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
           >
-            {tab === "오늘" && (
-              <HomeScreen
-                day={day}
-                season={season}
-                progress={state.progress}
-                completed={state.completedTotal}
-                flowers={state.flowers.length}
-                current={current}
-                remaining={active.length}
-                onCompose={() => setCompose(true)}
-                onStart={() => setTab("실행")}
-                onManage={() => setManage(true)}
-                onGarden={() => {
-                  setGardenView("기억");
-                  setTab("정원");
-                }}
-              />
-            )}
-            {tab === "실행" && (
-              <FocusScreen
-                current={current}
-                progress={state.progress}
-                season={season}
-                busy={busy}
-                onComplete={() => void complete()}
-                onLater={() =>
-                  current &&
-                  void commit((s) => changeTask(s, current.id, "later"))
-                }
-                onSplit={() => {
-                  if (current) {
-                    setSplitId(current.id);
-                    setSteps("");
+            <ScrollView
+              ref={scroll}
+              contentContainerStyle={s.content}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              automaticallyAdjustKeyboardInsets
+            >
+              {tab === "오늘" && (
+                <HomeScreen
+                  day={day}
+                  progress={state.progress}
+                  current={current}
+                  remaining={active.length}
+                  completed={todayRecord.completed}
+                  thought={thought}
+                  latestThought={todayRecord.thoughts.at(-1)?.original}
+                  saved={thought === (state.diary?.[day]?.draft || "")}
+                  busy={busy}
+                  onChange={(value) => {
+                    setThought(value);
+                    setDraft(null);
+                  }}
+                  onSave={() => void saveThought()}
+                  onOrganize={() => void organize()}
+                  onStart={() => setTab("실행")}
+                  onManage={() => setManage(true)}
+                  onSeeds={() => openAux("씨앗")}
+                />
+              )}
+              {tab === "실행" && (
+                <FocusScreen
+                  current={current}
+                  progress={state.progress}
+                  busy={busy}
+                  onComplete={() => void complete()}
+                  onLater={() =>
+                    current &&
+                    void commit((s) => changeTask(s, current.id, "later"))
                   }
-                }}
-                onCompose={() => setCompose(true)}
-              />
-            )}
-            {tab === "정원" && (
-              <>
-                <View style={s.gardenHeading}>
-                  <View>
-                    <Text style={s.eyebrow}>{season}의 작은 기록</Text>
-                    <Text accessibilityRole="header" style={s.title}>
-                      나의 정원
-                    </Text>
-                  </View>
-                  <Text style={s.gardenCount}>
-                    {state.flowers.length}
-                    <Text style={s.small}> 송이</Text>
-                  </Text>
-                </View>
-                <View style={s.segments}>
-                  {["기억", "도감"].map((section) => (
-                    <Pressable
-                      key={section}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: gardenView === section }}
-                      onPress={() => setGardenView(section)}
-                      style={[
-                        s.segment,
-                        gardenView === section && s.segmentActive,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          s.segmentText,
-                          gardenView === section && s.segmentTextActive,
-                        ]}
-                      >
-                        {section === "기억" ? "기억의 정원" : "꽃 도감"}
+                  onSplit={() => {
+                    if (current) {
+                      setSplitId(current.id);
+                      setSteps("");
+                    }
+                  }}
+                  onCompose={() => setTab("오늘")}
+                  onBack={() => setTab("오늘")}
+                />
+              )}
+              {tab === "정원" && (
+                <>
+                  <View style={s.gardenHeading}>
+                    <View>
+                      <Text style={s.eyebrow}>{season}의 꽃을 모은 페이지</Text>
+                      <Text accessibilityRole="header" style={s.title}>
+                        기억의 정원
                       </Text>
-                    </Pressable>
-                  ))}
-                </View>
-                {gardenView === "기억" ? (
-                  <>
-                    <GardenPager
-                      items={state.flowers.map((f) => ({
-                        id: f.id,
-                        flowerId: f.id,
-                        name: f.name,
-                        speciesId: f.speciesId,
-                        color: f.color,
-                        note:
-                          f.variantName +
-                          " · " +
-                          (f.registeredAt ? "도감에 담김" : "미등록"),
-                      }))}
-                      onSelect={setSelectedId}
-                    />
-                    <Text style={s.gardenNote}>
-                      {state.flowers.length
-                        ? "꽃을 누르면 그날의 작은 이야기가 열려요."
-                        : "아직 빈 자리도 괜찮아요. 작은 행동 끝에 꽃이 찾아올 거예요."}
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <GardenPager
-                      label="도감"
-                      items={catalogSpecies.map((species: any) => {
-                        const found = state.flowers.filter(
-                          (f) => f.registeredAt && f.speciesId === species.id,
-                        );
-                        return {
-                          id: species.id,
-                          flowerId: found[0]?.id,
-                          name: found.length ? species.name : "미발견",
-                          speciesId: species.id,
-                          color: found[0]?.color || "#bbc6ac",
-                          note: found.length
-                            ? new Set(found.map((f) => f.variantId)).size +
-                              "가지 색상"
-                            : "아직 빈 페이지",
-                        };
-                      })}
-                      onSelect={(id) => {
-                        const found = state.flowers.find(
-                          (f) => f.registeredAt && f.speciesId === id,
-                        );
-                        if (found) setSelectedId(found.id);
-                        else setUnknown(true);
-                      }}
-                    />
-                    <Text style={s.gardenNote}>
-                      꽃말은 온점.의 창작 문구입니다.
-                    </Text>
-                  </>
-                )}
-              </>
-            )}
-            {tab === "씨앗" && (
-              <>
-                <Text style={s.eyebrow}>다시 시작할 수 있도록</Text>
-                <Text style={s.title}>씨앗 보관함</Text>
-                <Text style={s.body}>
-                  끝내지 못한 일이 아니라, 다음을 기다리는 씨앗이에요.
-                </Text>
-                {state.tasks
-                  .filter((t) => t.status === "postponed")
-                  .map((t) => (
-                    <View key={t.id} style={s.card}>
-                      <Text style={s.subtitle}>{t.title}</Text>
-                      <Button
-                        title="다시 꺼내기"
+                    </View>
+                  </View>
+                  <GardenPager
+                    season={season}
+                    items={state.flowers.map((f) => ({
+                      id: f.id,
+                      flowerId: f.id,
+                      name: f.name,
+                      speciesId: f.speciesId,
+                      color: f.color,
+                      note: f.registeredAt ? "도감에 담김" : "아직 정원에",
+                    }))}
+                    onSelect={setSelectedId}
+                  />
+                  <Text style={s.gardenNote}>
+                    {state.flowers.length
+                      ? "꽃을 누르면 그날의 이야기가 펼쳐져요."
+                      : "빈 자리도 다정하게. 작은 행동 끝에 꽃이 찾아와요."}
+                  </Text>
+                </>
+              )}
+              {tab === "도감" && (
+                <CatalogScreen
+                  species={catalogSpecies}
+                  flowers={state.flowers}
+                  onFlower={setSelectedId}
+                  onGarden={() => setTab("정원")}
+                />
+              )}
+              {tab === "기록" && (
+                <RecordsScreen
+                  state={state}
+                  today={day}
+                  busy={busy}
+                  notes={noteDrafts}
+                  onNoteChange={(date, value) =>
+                    setNoteDrafts((s) => ({ ...s, [date]: value }))
+                  }
+                  onPageChange={() =>
+                    scroll.current?.scrollTo({ y: 0, animated: false })
+                  }
+                  onSave={(date, note) =>
+                    void commit((s) => setDiaryEntry(s, date, { note }))
+                  }
+                  onFlower={setSelectedId}
+                  onSeeds={() => openAux("씨앗")}
+                />
+              )}
+              {tab === "씨앗" && (
+                <>
+                  <Text style={s.eyebrow}>다시 시작할 수 있도록</Text>
+                  <Text style={s.title}>씨앗 보관함</Text>
+                  <Text style={s.body}>
+                    끝내지 못한 일이 아니라, 다음을 기다리는 씨앗이에요.
+                  </Text>
+                  {state.tasks
+                    .filter((t) => t.status === "postponed")
+                    .map((t) => (
+                      <View key={t.id} style={s.card}>
+                        <Text style={s.subtitle}>{t.title}</Text>
+                        <Button
+                          title="다시 꺼내기"
+                          disabled={busy}
+                          onPress={() =>
+                            void commit((s) => changeTask(s, t.id, "restore"))
+                          }
+                        />
+                      </View>
+                    ))}
+                  {!state.tasks.some((t) => t.status === "postponed") && (
+                    <Text style={s.small}>아직 보관한 씨앗이 없어요.</Text>
+                  )}
+                </>
+              )}
+              {tab === "설정" && (
+                <>
+                  <Text style={s.title}>나에게 편안하게</Text>
+                  <InstallHint />
+                  <View style={s.card}>
+                    <View style={s.row}>
+                      <Text style={[s.body, { flex: 1 }]}>모션 줄이기</Text>
+                      <Switch
+                        accessibilityLabel="모션 줄이기"
+                        value={state.settings.reduceMotion}
                         disabled={busy}
-                        onPress={() =>
-                          void commit((s) => changeTask(s, t.id, "restore"))
+                        onValueChange={(v) =>
+                          void commit((s) => ({
+                            ...s,
+                            settings: { ...s.settings, reduceMotion: v },
+                          }))
                         }
                       />
                     </View>
-                  ))}
-                {!state.tasks.some((t) => t.status === "postponed") && (
-                  <Text style={s.small}>아직 보관한 씨앗이 없어요.</Text>
-                )}
-              </>
-            )}
-            {tab === "설정" && (
-              <>
-                <Text style={s.title}>나에게 편안하게</Text>
-                <InstallHint />
-                <View style={s.card}>
-                  <View style={s.row}>
-                    <Text style={[s.body, { flex: 1 }]}>모션 줄이기</Text>
-                    <Switch
-                      accessibilityLabel="모션 줄이기"
-                      value={state.settings.reduceMotion}
+                    <Text style={s.small}>
+                      기기 모션 감소 설정도 함께 존중해요.
+                    </Text>
+                  </View>
+                  <View style={s.card}>
+                    <Text style={s.subtitle}>수익화 기능 · 테스트 모드</Text>
+                    <Text style={s.body}>
+                      실제 광고와 결제는 연결되지 않았어요. 비용이 청구되지
+                      않습니다. 개발용 확률은 일반 96.5%, 달빛·오로라 합계 3%,
+                      금빛 0.5%이며 무료·PLUS가 동일합니다.
+                    </Text>
+                    <View style={s.row}>
+                      <Text style={[s.body, { flex: 1 }]}>PLUS 테스트</Text>
+                      <Switch
+                        accessibilityLabel="PLUS 테스트 모드"
+                        value={state.premiumDemo}
+                        disabled={busy}
+                        onValueChange={(v) =>
+                          void commit((s) => ({
+                            ...s,
+                            premiumDemo: v,
+                          }))
+                        }
+                      />
+                    </View>
+                    <Text style={s.small}>
+                      새 품종·색상 조합만 선택형 보상 테스트 대상이며, 같은 꽃은
+                      광고 없이 담아요.
+                    </Text>
+                  </View>
+                  <View style={s.card}>
+                    <Text style={s.subtitle}>내 기기에만 남는 기록</Text>
+                    <Text style={s.body}>
+                      할 일과 꽃은 자동 저장해요. 다이어리 글은 저장 버튼으로
+                      남겨요. 서버 전송은 없어요. 백업 파일에는 생각과 성취
+                      기록이 담기며 암호화되지 않습니다. 안전한 곳에 보관해
+                      주세요.
+                    </Text>
+                    <Button
+                      title="백업 파일 내보내기"
+                      secondary
                       disabled={busy}
-                      onValueChange={(v) =>
-                        void commit((s) => ({
-                          ...s,
-                          settings: { ...s.settings, reduceMotion: v },
-                        }))
+                      onPress={() => void backup()}
+                    />
+                    <Button
+                      title="백업 파일에서 복원"
+                      secondary
+                      disabled={busy}
+                      onPress={() => void restore()}
+                    />
+                    <Button
+                      title="기기 데이터 전체 삭제"
+                      secondary
+                      disabled={busy}
+                      onPress={() =>
+                        setConfirmation({
+                          title: "모든 기록을 지울까요?",
+                          body: "다이어리, 꽃, 씨앗과 성취 기록이 모두 삭제됩니다. 내보낸 백업 파일은 별도로 삭제해 주세요.",
+                          label: "전체 삭제",
+                          action: () =>
+                            void replaceData(() => store.current.clear()),
+                        })
                       }
                     />
                   </View>
-                  <Text style={s.small}>
-                    기기 모션 감소 설정도 함께 존중해요.
-                  </Text>
-                </View>
-                <View style={s.card}>
-                  <Text style={s.subtitle}>수익화 기능 · 테스트 모드</Text>
-                  <Text style={s.body}>
-                    실제 광고와 결제는 연결되지 않았어요. 비용이 청구되지
-                    않습니다. 개발용 확률은 일반 96.5%, 달빛·오로라 합계 3%,
-                    금빛 0.5%이며 무료·PLUS가 동일합니다.
-                  </Text>
-                  <View style={s.row}>
-                    <Text style={[s.body, { flex: 1 }]}>PLUS 테스트</Text>
-                    <Switch
-                      accessibilityLabel="PLUS 테스트 모드"
-                      value={state.premiumDemo}
-                      disabled={busy}
-                      onValueChange={(v) =>
-                        void commit((s) => ({
-                          ...s,
-                          premiumDemo: v,
-                        }))
-                      }
-                    />
-                  </View>
-                  <Text style={s.small}>
-                    새 품종·색상 조합만 선택형 보상 테스트 대상이며, 같은 꽃은
-                    광고 없이 담아요.
-                  </Text>
-                </View>
-                <View style={s.card}>
-                  <Text style={s.subtitle}>내 기기에만 남는 기록</Text>
-                  <Text style={s.body}>
-                    이 기기에 자동 저장 · 서버 전송 없음. 백업 파일에는 생각과
-                    성취 기록이 담기며 암호화되지 않습니다. 안전한 곳에 보관해
-                    주세요.
-                  </Text>
-                  <Button
-                    title="백업 파일 내보내기"
-                    secondary
-                    disabled={busy}
-                    onPress={() => void backup()}
-                  />
-                  <Button
-                    title="백업 파일에서 복원"
-                    secondary
-                    disabled={busy}
-                    onPress={() => void restore()}
-                  />
-                  <Button
-                    title="기기 데이터 전체 삭제"
-                    secondary
-                    disabled={busy}
-                    onPress={() =>
-                      setConfirmation({
-                        title: "모든 기록을 지울까요?",
-                        body: "꽃, 씨앗과 성취 기록이 모두 삭제됩니다. 내보낸 백업 파일은 별도로 삭제해 주세요.",
-                        label: "전체 삭제",
-                        action: () =>
-                          void replaceData(() => store.current.clear()),
-                      })
-                    }
-                  />
-                </View>
-              </>
-            )}
-          </ScrollView>
+                </>
+              )}
+            </ScrollView>
+          </KeyboardAvoidingView>
           <View style={s.nav}>
-            {["오늘", "실행", "정원", "씨앗", "설정"].map((name) => (
+            {["오늘", "정원", "도감", "기록"].map((name) => (
               <Pressable
                 key={name}
                 accessibilityRole="tab"
-                accessibilityState={{ selected: tab === name }}
+                accessibilityState={{ selected: activeTab === name }}
                 onPress={() => setTab(name)}
-                style={[s.navItem, tab === name && s.navActive]}
+                style={[s.navItem, activeTab === name && s.navActive]}
               >
                 <AppIcon
                   name={name}
-                  color={tab === name ? "#49664d" : "#9aa58e"}
+                  color={activeTab === name ? "#49664d" : "#9aa58e"}
                 />
                 <Text
                   style={[
                     s.navText,
-                    tab === name && { color: palette.ink, fontWeight: "800" },
+                    activeTab === name && {
+                      color: palette.ink,
+                      fontWeight: "800",
+                    },
                   ]}
                 >
                   {name}
@@ -629,35 +677,11 @@ function Onjeom() {
           {draft === null ? "생각을 꺼내놓아요." : "내가 정하는 한 걸음"}
         </Text>
         {error ? <Text accessibilityRole="alert">{error}</Text> : null}
-        {draft === null ? (
+        {draft !== null && (
           <>
-            <Text style={s.body}>정리되지 않은 말이어도 괜찮아요.</Text>
-            <TextInput
-              accessibilityLabel="자유로운 생각 입력"
-              multiline
-              placeholder="지금 머릿속에 있는 것들을 적어주세요."
-              value={thought}
-              onChangeText={setThought}
-              maxLength={10000}
-              style={[s.input, { minHeight: 160 }]}
-              textAlignVertical="top"
-            />
             <Text style={s.small}>
-              규칙 기반으로 나눠요. 저장하기 전에 직접 다듬을 수 있어요.
+              규칙으로 나눈 메모예요. 직접 다듬은 뒤 시작해요.
             </Text>
-            <Button
-              title="할 일로 나눠 보기"
-              disabled={busy || !thought.trim()}
-              onPress={() =>
-                void ruleSeparator
-                  .separate(thought)
-                  .then((items: string[]) => setDraft(items))
-                  .catch((e: unknown) => setError(message(e)))
-              }
-            />
-          </>
-        ) : (
-          <>
             <Text style={s.small}>지금 할 수 있는 일만 남겨도 좋아요.</Text>
             {draft.map((text, i) => (
               <View key={i} style={s.record}>
@@ -732,11 +756,15 @@ function Onjeom() {
               onPress={() => setDraft([...draft, ""])}
             />
             <Button
-              title="검토한 할 일 추가"
+              title="한 걸음 모드 시작"
               disabled={busy || !draft.some((x) => x.trim())}
               onPress={() =>
                 void commit((s) =>
-                  addTasks(s, draft, { original: thought }),
+                  setDiaryEntry(
+                    addTasks(s, draft, { original: thought }),
+                    day,
+                    { draft: "" },
+                  ),
                 ).then((next) => {
                   if (next) {
                     setDraft(null);
@@ -750,11 +778,11 @@ function Onjeom() {
           </>
         )}
         <Button
-          title={draft === null ? "돌아가기" : "다시 적기"}
+          title="다이어리로 돌아가기"
           secondary
           onPress={() => {
-            if (draft !== null) setDraft(null);
-            else setCompose(false);
+            setCompose(false);
+            setTab("오늘");
           }}
         />
       </Sheet>
@@ -1054,16 +1082,17 @@ const s = StyleSheet.create({
     width: "100%",
     maxWidth: 480,
     alignSelf: "center",
-    backgroundColor: "#f4f3e9",
+    backgroundColor: palette.cream,
   },
   header: {
     paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 4,
+    paddingTop: 0,
+    paddingBottom: 0,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
+  pageMark: { fontSize: 10, color: "#939983", letterSpacing: 1 },
   brand: {
     fontSize: 23,
     fontWeight: "700",
@@ -1079,8 +1108,8 @@ const s = StyleSheet.create({
   },
   small: { fontSize: 13, lineHeight: 21, color: palette.muted },
   content: {
-    padding: 20,
-    paddingTop: 8,
+    padding: 24,
+    paddingTop: 4,
     paddingBottom: 24,
     gap: 16,
     width: "100%",
@@ -1108,48 +1137,44 @@ const s = StyleSheet.create({
   },
   body: { fontSize: 16, lineHeight: 27, color: palette.muted },
   input: {
-    borderWidth: 1,
+    borderWidth: 0,
+    borderBottomWidth: 1,
     borderColor: palette.line,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 0,
+    padding: 12,
     fontSize: 16,
     lineHeight: 26,
     color: palette.ink,
-    backgroundColor: "#fffef9",
+    backgroundColor: "transparent",
   },
   button: {
-    backgroundColor: "#4b6b50",
-    borderRadius: 18,
-    padding: 16,
+    backgroundColor: palette.sage,
+    borderRadius: 12,
+    padding: 14,
     minHeight: 52,
     alignItems: "center",
     justifyContent: "center",
     marginVertical: 4,
   },
-  secondary: { backgroundColor: palette.sand },
+  secondary: { backgroundColor: "#efeddf" },
   buttonText: { fontSize: 16, fontWeight: "600", color: "#fff" },
   card: {
-    backgroundColor: "#fffdf7",
-    borderRadius: 22,
-    borderWidth: 1,
+    backgroundColor: "transparent",
+    borderTopWidth: 1,
     borderColor: palette.line,
-    padding: 20,
+    paddingVertical: 18,
     gap: 12,
   },
   row: { flexDirection: "row", alignItems: "center", gap: 16 },
   link: { color: palette.sage, fontWeight: "600", padding: 10 },
   nav: {
     flexDirection: "row",
-    marginHorizontal: 14,
-    marginBottom: 8,
-    padding: 5,
-    borderRadius: 25,
-    backgroundColor: "#fffdf5",
-    shadowColor: "#516446",
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
+    backgroundColor: palette.cream,
+    borderTopWidth: 0.7,
+    borderTopColor: palette.line,
+    paddingHorizontal: 18,
+    paddingTop: 5,
+    paddingBottom: 7,
   },
   navItem: {
     flex: 1,
@@ -1159,10 +1184,7 @@ const s = StyleSheet.create({
     minHeight: 56,
   },
   navText: { fontSize: 11, color: palette.muted },
-  navActive: {
-    backgroundColor: "#e9eedd",
-    borderRadius: 20,
-  },
+  navActive: {},
   gardenHeading: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1207,6 +1229,11 @@ const s = StyleSheet.create({
     marginVertical: 8,
   },
   bloomMemory: { alignItems: "center", paddingVertical: 8, gap: 4 },
-  record: { backgroundColor: "#f0f1e6", borderRadius: 18, padding: 16, gap: 8 },
+  record: {
+    borderTopWidth: 1,
+    borderTopColor: palette.line,
+    paddingVertical: 12,
+    gap: 8,
+  },
   error: { backgroundColor: "#f4e2d3", padding: 16 },
 });

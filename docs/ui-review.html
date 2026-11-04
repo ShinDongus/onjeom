@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>온점. 다이어리 화면 비교</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        padding: 40px 24px;
+        background: #eeeadf;
+        color: #344b3c;
+        font:
+          15px/1.7 system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 1240px;
+        margin: auto;
+      }
+      h1 {
+        font-size: 28px;
+        font-weight: 600;
+      }
+      h2 {
+        font-size: 20px;
+        font-weight: 500;
+        margin-top: 50px;
+      }
+      p {
+        max-width: 740px;
+        color: #687660;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 24px;
+      }
+      .compare {
+        grid-template-columns: repeat(2, minmax(0, 390px));
+      }
+      figure {
+        margin: 0;
+      }
+      figcaption {
+        padding: 12px 0;
+        font-size: 13px;
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid #d7d7c5;
+        border-radius: 4px;
+      }
+      .hint {
+        font-size: 12px;
+      }
+      a {
+        color: #4c6e50;
+      }
+      nav {
+        display: flex;
+        gap: 24px;
+        flex-wrap: wrap;
+      }
+      @media (max-width: 560px) {
+        body {
+          padding: 24px 14px;
+        }
+        .compare {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>온점. 하루를 펼치는 다이어리</h1>
+      <p>
+        아이보리 종이 위에 생각을 적고, 한 가지 일을 마치고, 그날의 꽃을 붙이는
+        네 개의 책갈피. 큰 온실과 행동 패널에서 날짜·메모·완료 표시를 중심으로
+        화면을 다시 구성했습니다.
+      </p>
+      <p class="hint">
+        390×844 Chromium 캡처 · 테스트용 예시 데이터 · 실제 iPhone/Safari/키보드
+        QA는 별도입니다. 입력 중 화면에도 실제 소프트웨어 키보드는 표시되지
+        않습니다.
+      </p>
+      <nav>
+        <a href="#home">홈 비교</a><a href="#flow">입력과 실행</a
+        ><a href="#garden">정원과 도감</a><a href="#records">지난 기록</a>
+      </nav>
+      <h2 id="home">오늘의 페이지 · 이전 / 이후</h2>
+      <div class="grid compare">
+        <figure>
+          <img src="screenshots/before-home.png" alt="이전 온실 중심 홈" />
+          <figcaption>이전 · 온실 장면과 하단 행동 패널</figcaption>
+        </figure>
+        <figure>
+          <img src="screenshots/01-today.png" alt="새 다이어리 홈" />
+          <figcaption>이후 · 날짜, 줄노트, 작은 일과 식물 스티커</figcaption>
+        </figure>
+      </div>
+      <h2 id="flow">생각을 적고, 한 걸음씩</h2>
+      <div class="grid">
+        <figure>
+          <img src="screenshots/02-writing.png" alt="생각 입력" />
+          <figcaption>자유롭게 생각 입력 · 저장 후 재실행 복원</figcaption>
+        </figure>
+        <figure>
+          <img src="screenshots/03-review.png" alt="작업 분리 검토 메모" />
+          <figcaption>규칙으로 나눈 메모를 수정·제외·정렬</figcaption>
+        </figure>
+        <figure>
+          <img src="screenshots/04-one-step.png" alt="한 걸음 모드" />
+          <figcaption>완료·더 작게 나누기·나중에 하기</figcaption>
+        </figure>
+      </div>
+      <h2 id="garden">꽃을 모으는 두 가지 페이지</h2>
+      <div class="grid">
+        <figure>
+          <img src="screenshots/before-garden.png" alt="이전 선반 정원" />
+          <figcaption>이전 · 입체 선반 정원</figcaption>
+        </figure>
+        <figure>
+          <img src="screenshots/05-garden.png" alt="새 기억의 정원" />
+          <figcaption>이후 · 계절의 종이 위 3×3 꽃, 좌우 넘기기</figcaption>
+        </figure>
+        <figure>
+          <img src="screenshots/06-catalog.png" alt="식물도감 책" />
+          <figcaption>
+            한 종씩 펼치는 도감 · 꽃말, 날짜, 희귀 색상, 시즌
+          </figcaption>
+        </figure>
+      </div>
+      <h2 id="records">지나온 날도, 한 장의 다이어리</h2>
+      <div class="grid">
+        <figure>
+          <img src="screenshots/07-calendar.png" alt="날짜 선택 달력" />
+          <figcaption>기록이 있는 날에만 작은 점 · 출석 점수 없음</figcaption>
+        </figure>
+        <figure>
+          <img src="screenshots/08-record-page.png" alt="날짜별 기록 페이지" />
+          <figcaption>작성한 생각 · 실제 완료한 일 · 그날의 꽃</figcaption>
+        </figure>
+        <figure>
+          <img
+            src="screenshots/09-record-note.png"
+            alt="지난 날에 짧은 기록 쓰기"
+          />
+          <figcaption>짧은 기록 · 저장과 백업 복원 지원</figcaption>
+        </figure>
+      </div>
+      <p class="hint">
+        원본 프로토타입과 실제 완료 4개당 개화 규칙은 유지했습니다. 광고와
+        PLUS는 테스트 모드이며, 취소한 꽃도 정원에 계속 보관합니다.
+      </p>
+    </main>
+  </body>
+</html>

@@ -18,29 +18,30 @@ test("홈 화면 설치 메타데이터와 캐시된 앱의 오프라인 실행�
   expect(icon.headers()["content-type"]).toBe("image/png");
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
-  await page
-    .getByRole("button", { name: "생각 꺼내놓기", exact: true })
-    .click();
   await page.getByLabel("자유로운 생각 입력").fill("오프라인에서 할 일");
   await page
-    .getByRole("button", { name: "할 일로 나눠 보기", exact: true })
+    .getByRole("button", { name: "생각 정리하기", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "검토한 할 일 추가", exact: true })
+    .getByRole("button", { name: "한 걸음 모드 시작", exact: true })
     .click();
   await expect(
     page.getByRole("heading", { name: "오프라인에서 할 일" }),
   ).toBeVisible();
   await context.setOffline(true);
   await page.reload();
-  await page.getByRole("tab", { name: "실행", exact: true }).click();
+  await page
+    .getByRole("button", { name: "한 걸음 시작하기", exact: true })
+    .click();
   await expect(
     page.getByRole("heading", { name: "오프라인에서 할 일" }),
   ).toBeVisible();
-  await page
-    .getByRole("button", { name: "이만큼 해냈어요 · 완료", exact: true })
-    .click();
+  await page.getByRole("button", { name: "완료했어요", exact: true }).click();
   await page.reload();
-  await page.getByRole("tab", { name: "실행", exact: true }).click();
-  await expect(page.getByText("잠시, 여백을 누려요.")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "한 걸음 시작하기", exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("checkbox", { name: "오프라인에서 할 일", exact: true }),
+  ).toBeVisible();
 });

@@ -21,7 +21,7 @@ export default function AppIcon({
     >
       {name === "오늘" ? (
         <>
-          <Path d="m3 11 9-7 9 7M5 10v10h14V10M10 20v-6h4v6" />
+          <Path d="M5 3h14v18H5zM8 3v18M11 8h5M11 12h5M11 16h3" />
         </>
       ) : name === "실행" ? (
         <>
@@ -31,6 +31,16 @@ export default function AppIcon({
       ) : name === "정원" ? (
         <>
           <Path d="M12 21v-9M12 13C5 14 3 10 4 5c6 0 9 3 8 8ZM12 15c7 1 9-3 8-8-6 0-9 3-8 8Z" />
+        </>
+      ) : name === "도감" ? (
+        <>
+          <Path d="M12 5C8 2 4 3 2 4v15c4-2 7-1 10 1 3-2 6-3 10-1V4c-3-1-6-1-10 1ZM12 5v15" />
+          <Path d="M6 8h3M15 8h3" />
+        </>
+      ) : name === "기록" ? (
+        <>
+          <Rect x={3} y={5} width={18} height={16} rx={2} />
+          <Path d="M3 10h18M8 3v4M16 3v4M8 14h2M14 14h2M8 17h2" />
         </>
       ) : name === "씨앗" ? (
         <>

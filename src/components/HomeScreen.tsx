@@ -1,239 +1,333 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Pressable,
+  Platform,
   StyleSheet,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from "react-native";
-import GardenScene from "./GardenScene";
+import { BotanicalSticker } from "./PaperTexture";
+import { diary, ink, sage, muted, line } from "./diary-theme";
 type Props = {
-  season: string;
   day: string;
   progress: number;
-  completed: number;
-  flowers: number;
   current?: { title: string };
   remaining: number;
-  onCompose: () => void;
+  completed: { id: string; title: string }[];
+  thought: string;
+  latestThought?: string;
+  saved: boolean;
+  busy: boolean;
+  onChange: (value: string) => void;
+  onSave: () => void;
+  onOrganize: () => void;
   onStart: () => void;
   onManage: () => void;
-  onGarden: () => void;
+  onSeeds: () => void;
 };
 export default function HomeScreen({
-  season,
   day,
   progress,
-  flowers,
   current,
   remaining,
-  onCompose,
+  completed,
+  thought,
+  latestThought,
+  saved,
+  busy,
+  onChange,
+  onSave,
+  onOrganize,
   onStart,
   onManage,
-  onGarden,
+  onSeeds,
 }: Props) {
   const { height } = useWindowDimensions();
+  const [writingFocus, setWritingFocus] = useState(false);
+  const date = new Date(`${day}T12:00:00`),
+    weekday = [
+      "일요일",
+      "월요일",
+      "화요일",
+      "수요일",
+      "목요일",
+      "금요일",
+      "토요일",
+    ][date.getDay()];
+  const writingHeight = Math.max(130, Math.min(220, height - 600));
   return (
-    <View style={s.page}>
-      <View style={s.heading}>
-        <Text style={s.date}>
-          {Number(day.slice(5, 7))}월 {Number(day.slice(8))}일, 나의 작은 온실
-        </Text>
-        <Text accessibilityRole="header" style={s.title}>
-          {current
-            ? "오늘도, 나의 속도로."
-            : "생각을 내려놓으면,\n하루가 피어나요."}
-        </Text>
-      </View>
-      <GardenScene
-        season={season}
-        progress={progress}
-        height={Math.max(160, Math.min(340, height - 510))}
-      />
-      <View style={s.dock}>
-        <View style={s.dockTop}>
-          <View style={s.growth} accessibilityLabel={`현재 성장 ${progress}/4`}>
-            {[0, 1, 2, 3].map((i) => (
-              <View key={i} style={[s.pip, i < progress && s.pipDone]} />
-            ))}
-            <Text style={s.stage}>
-              {["씨앗", "새싹", "잎사귀", "봉오리"][progress]}
+    <View style={s.page} testID="diary-home">
+      <View style={s.dateRow}>
+        <View>
+          <Text style={diary.eyebrow}>
+            {date.getFullYear()} · {date.getMonth() + 1}월의 페이지
+          </Text>
+          <View style={s.dayRow}>
+            <Text accessibilityRole="header" style={s.date}>
+              {date.getMonth() + 1}월 {date.getDate()}일
             </Text>
+            <Text style={s.weekday}>{weekday}</Text>
           </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="오늘의 정원 보기"
-            onPress={onGarden}
-            style={s.quiet}
-          >
-            <Text style={s.gardenLink}>
-              나의 정원 {flowers ? `· ${flowers}` : ""} ›
-            </Text>
-          </Pressable>
         </View>
-        {current ? (
-          <>
-            <View style={s.taskRow}>
-              <View style={s.taskMark}>
-                <Text style={s.markText}>01</Text>
-              </View>
-              <View style={s.taskBody}>
-                <Text style={s.kicker}>지금의 한 가지</Text>
-                <Text numberOfLines={2} style={s.task}>
-                  {current.title}
-                </Text>
-              </View>
-            </View>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="지금 할 일 이어서 하기"
-              onPress={onStart}
-              style={({ pressed }) => [s.primary, pressed && s.pressed]}
-            >
-              <Text style={s.primaryText}>이 한 걸음 시작하기</Text>
-              <Text style={s.arrow}>→</Text>
-            </Pressable>
-            <View style={s.links}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="생각 꺼내놓기"
-                onPress={onCompose}
-                style={s.quiet}
-              >
-                <Text style={s.gardenLink}>＋ 생각 꺼내놓기</Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="할 일 살펴보기·수정"
-                onPress={onManage}
-                style={s.quiet}
-              >
-                <Text style={s.gardenLink}>남은 일 {remaining}개 ›</Text>
-              </Pressable>
-            </View>
-          </>
-        ) : (
-          <>
-            <Text style={s.emptyTitle}>지금, 어떤 생각이 있나요?</Text>
-            <Text style={s.description}>여기에 두고, 하나씩 꺼내 보아요.</Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="생각 꺼내놓기"
-              onPress={onCompose}
-              style={({ pressed }) => [s.primary, pressed && s.pressed]}
-            >
-              <Text style={s.primaryText}>＋ 생각 꺼내놓기</Text>
-              <Text style={s.arrow}>→</Text>
-            </Pressable>
-            {!!remaining && (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="할 일 살펴보기·수정"
-                onPress={onManage}
-                style={s.quiet}
-              >
-                <Text style={s.gardenLink}>남은 일 {remaining}개</Text>
-              </Pressable>
-            )}
-          </>
+        <BotanicalSticker size={61} species="cosmos" />
+      </View>
+      <Text style={s.motto}>반듯하지 않은 하루도, 나의 한 페이지.</Text>
+      <View style={s.writing}>
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          {Array.from({ length: Math.floor(writingHeight / 30) }, (_, i) => (
+            <View key={i} style={[s.rule, { top: 29 + i * 30 }]} />
+          ))}
+        </View>
+        {!!latestThought && (
+          <Text
+            accessibilityLabel="오늘 남긴 생각"
+            numberOfLines={2}
+            style={{ height: 60, fontSize: 15, lineHeight: 30, color: ink }}
+          >
+            {latestThought}
+          </Text>
         )}
+        <TextInput
+          accessibilityLabel="자유로운 생각 입력"
+          placeholder={
+            "지금 떠오르는 생각을 적어보세요.\n정리되지 않은 말이어도 괜찮아요."
+          }
+          placeholderTextColor="#929786"
+          multiline
+          value={thought}
+          onChangeText={onChange}
+          maxLength={10000}
+          textAlignVertical="top"
+          onFocus={() => setWritingFocus(true)}
+          onBlur={() => setWritingFocus(false)}
+          style={[
+            s.input,
+            {
+              height: latestThought
+                ? Math.max(80, writingHeight - 60)
+                : writingHeight,
+              borderBottomColor: writingFocus ? "#9aab87" : "transparent",
+              borderBottomWidth: 1,
+            },
+            Platform.OS === "web" && ({ outlineStyle: "none" } as any),
+          ]}
+        />
+      </View>
+      <View style={s.writeTools}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onSave}
+          disabled={busy || saved}
+          accessibilityState={{ disabled: busy || saved }}
+          style={diary.quiet}
+        >
+          <Text style={s.save}>{saved ? "✓ 저장됨" : "생각 저장"}</Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="생각 정리하기"
+          onPress={onOrganize}
+          disabled={busy || !thought.trim()}
+          accessibilityState={{ disabled: busy || !thought.trim() }}
+          style={[s.organize, !thought.trim() && { opacity: 0.45 }]}
+        >
+          <Text style={s.organizeText}>생각 정리하기 →</Text>
+        </Pressable>
+      </View>
+      <View style={s.daily}>
+        <View style={s.taskArea}>
+          <View style={s.sectionHeading}>
+            <Text style={diary.heading}>오늘의 작은 일</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="할 일 살펴보기·수정"
+              onPress={onManage}
+              style={diary.quiet}
+            >
+              <Text style={s.tinyLink}>모두 보기 ›</Text>
+            </Pressable>
+          </View>
+          {current ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="한 걸음 시작하기"
+              onPress={onStart}
+              style={s.taskRow}
+            >
+              <View style={s.checkbox} />
+              <Text numberOfLines={2} style={s.taskTitle}>
+                {current.title}
+              </Text>
+              <Text style={s.arrow}>→</Text>
+            </Pressable>
+          ) : (
+            <Text style={diary.small}>
+              할 일은 생각을 정리한 뒤 적어둘게요.
+            </Text>
+          )}
+          {completed.slice(-2).map((t) => (
+            <View
+              key={t.id}
+              testID="today-completed"
+              accessibilityRole="checkbox"
+              accessibilityLabel={t.title}
+              accessibilityState={{ checked: true, disabled: true }}
+              style={s.doneRow}
+            >
+              <Text style={s.doneCheck}>✓</Text>
+              <Text numberOfLines={1} style={s.doneTitle}>
+                {t.title}
+              </Text>
+            </View>
+          ))}
+          {current && (
+            <Text style={s.remaining}>
+              {remaining > 1
+                ? "다른 일은 잠시 접어두어요."
+                : "이 한 가지만 해도 괜찮아요."}
+            </Text>
+          )}
+        </View>
+        <View style={s.plant}>
+          <BotanicalSticker size={70} stage={progress} color="#d8b8bd" />
+          <Text style={s.stage}>
+            {["잠든 씨앗", "작은 새싹", "자라는 잎", "곧 만날 꽃"][progress]}
+          </Text>
+          <View style={s.dots}>
+            {[0, 1, 2, 3].map((i) => (
+              <View
+                key={i}
+                style={[s.dot, i < progress && { backgroundColor: sage }]}
+              />
+            ))}
+          </View>
+        </View>
+      </View>
+      <View style={s.footer}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="씨앗 보관함 열기"
+          onPress={onSeeds}
+          style={diary.quiet}
+        >
+          <Text style={s.tinyLink}>씨앗 보관함 ↗</Text>
+        </Pressable>
+        <Text style={s.pageNumber}>
+          온점. / {String(date.getDate()).padStart(2, "0")}
+        </Text>
       </View>
     </View>
   );
 }
 const s = StyleSheet.create({
-  page: { marginHorizontal: -20, paddingBottom: 4 },
-  heading: {
-    paddingHorizontal: 26,
-    paddingTop: 6,
-    paddingBottom: 4,
-    gap: 9,
-    backgroundColor: "#f4f3e9",
-  },
-  date: { fontSize: 11, color: "#7d8a74", letterSpacing: 0.4 },
-  title: {
-    fontSize: 25,
-    lineHeight: 35,
-    fontWeight: "600",
-    letterSpacing: -1.1,
-    color: "#334b3a",
-  },
-  dock: {
-    marginHorizontal: 16,
-    marginTop: -18,
-    padding: 20,
-    paddingTop: 8,
-    borderRadius: 28,
-    gap: 10,
-    backgroundColor: "#fffdf5",
-    shadowColor: "#53654a",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 20,
-    elevation: 4,
-  },
-  dockTop: {
+  page: { gap: 8 },
+  dateRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eeeede",
-    marginBottom: 6,
   },
-  growth: { flexDirection: "row", alignItems: "center", gap: 4 },
-  pip: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#e4e8d8" },
-  pipDone: { backgroundColor: "#6c8962" },
-  stage: { marginLeft: 5, fontSize: 11, color: "#74816a" },
-  quiet: { minHeight: 44, justifyContent: "center" },
-  gardenLink: { fontSize: 12, color: "#63765c" },
-  taskRow: {
+  dayRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "baseline",
     gap: 12,
-    paddingBottom: 8,
+    marginTop: 7,
   },
-  taskMark: {
-    width: 38,
-    height: 44,
-    borderRadius: 13,
-    borderWidth: 1,
-    borderColor: "#e1e5d7",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f5f5eb",
+  date: {
+    color: ink,
+    fontSize: 35,
+    lineHeight: 48,
+    fontWeight: "500",
+    letterSpacing: -1.5,
   },
-  markText: { fontSize: 12, color: "#879378" },
-  taskBody: { flex: 1, gap: 5 },
-  kicker: { fontSize: 11, color: "#8a957f" },
-  task: { fontSize: 18, lineHeight: 27, fontWeight: "600", color: "#344c3b" },
-  primary: {
-    backgroundColor: "#4b6b50",
-    minHeight: 56,
-    borderRadius: 18,
-    paddingHorizontal: 20,
+  weekday: { color: sage, fontSize: 14 },
+  motto: { color: muted, fontSize: 13, lineHeight: 23, marginBottom: 12 },
+  writing: { position: "relative" },
+  rule: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: 0.7,
+    backgroundColor: line,
+  },
+  input: {
+    padding: 0,
+    paddingTop: 2,
+    fontSize: 16,
+    lineHeight: 30,
+    color: ink,
+    backgroundColor: "transparent",
+  },
+  writeTools: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    shadowColor: "#38593c",
-    shadowOpacity: 0.14,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 5 },
-    elevation: 2,
+    alignItems: "center",
+    marginTop: 6,
+    marginBottom: 14,
   },
-  primaryText: { fontSize: 16, fontWeight: "600", color: "#fffef3" },
-  arrow: { color: "#d9e3cb", fontSize: 21 },
-  pressed: { opacity: 0.8, transform: [{ scale: 0.98 }] },
-  links: {
+  save: { fontSize: 12, color: muted },
+  organize: {
+    backgroundColor: sage,
+    minHeight: 44,
+    borderRadius: 10,
+    justifyContent: "center",
+    paddingHorizontal: 17,
+  },
+  organizeText: { color: "#fffef7", fontSize: 14, fontWeight: "500" },
+  daily: {
+    borderTopWidth: 1,
+    borderTopColor: line,
+    paddingTop: 10,
     flexDirection: "row",
+    gap: 10,
+  },
+  taskArea: { flex: 1, minWidth: 0, gap: 8 },
+  sectionHeading: {
+    flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
     flexWrap: "wrap",
   },
-  emptyTitle: { fontSize: 18, fontWeight: "600", color: "#344c3b" },
-  description: {
-    fontSize: 13,
-    color: "#85917a",
-    lineHeight: 22,
-    marginBottom: 8,
+  tinyLink: { color: muted, fontSize: 11 },
+  taskRow: {
+    minHeight: 48,
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 10,
   },
+  checkbox: {
+    width: 16,
+    height: 16,
+    borderWidth: 1,
+    borderColor: "#a3ad96",
+    borderRadius: 3,
+  },
+  taskTitle: { flex: 1, color: ink, fontSize: 15, lineHeight: 24 },
+  arrow: { color: sage, fontSize: 18 },
+  doneRow: {
+    flexDirection: "row",
+    gap: 10,
+    minHeight: 28,
+    alignItems: "center",
+  },
+  doneCheck: { color: sage, fontSize: 16 },
+  doneTitle: {
+    flex: 1,
+    color: muted,
+    fontSize: 13,
+    textDecorationLine: "line-through",
+  },
+  remaining: { fontSize: 11, color: muted, lineHeight: 18 },
+  plant: { width: 75, alignItems: "center", marginTop: 24 },
+  stage: { color: muted, fontSize: 10 },
+  dots: { flexDirection: "row", gap: 4, marginTop: 8 },
+  dot: { width: 4, height: 4, borderRadius: 3, backgroundColor: "#d9deca" },
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  pageNumber: { fontSize: 10, color: "#a1a68f", letterSpacing: 1 },
 });

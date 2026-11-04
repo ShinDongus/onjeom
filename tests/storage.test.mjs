@@ -4,6 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { setDiaryEntry } from "../src/diary.mjs";
 import { createStore } from "../src/storage.mjs";
 import {
   initialState,
@@ -41,6 +42,10 @@ test("실제 SQLite: 마이그레이션, 재실행 복원, 광고 취소 꽃 보
     for (const t of s.tasks.slice(0, 4))
       s = completeTask(s, t.id, { day: "2026-06-01", random: () => 0.01 });
     s = changeTask(s, s.tasks.find((t) => t.status === "active").id, "archive");
+    s = setDiaryEntry(s, "2026-06-01", {
+      draft: "정리할 생각",
+      note: "오래 기억할 하루",
+    });
     await store.save(s);
     db.close();
     db = adapter(path);

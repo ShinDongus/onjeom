@@ -28,7 +28,10 @@ http
       if (base && !pathname.startsWith(base + "/"))
         throw Error("Outside app scope");
       const local = pathname.slice(base.length);
-      const file = resolve(root, "." + (local === "/" ? "/index.html" : local));
+      const file = resolve(
+        root,
+        "." + (local.endsWith("/") ? local + "index.html" : local),
+      );
       if (!file.startsWith(root + sep)) throw Error("Unknown path");
       const content = await readFile(file);
       res.writeHead(200, {

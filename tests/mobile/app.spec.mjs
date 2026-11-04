@@ -26,23 +26,19 @@ test("React Native UI: 검토·완료·개화·취소 보관·등록·재실행�
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
-  await expect(button(page, "생각 꺼내놓기")).toBeVisible();
+  await expect(page.getByLabel("자유로운 생각 입력")).toBeVisible();
   await mkdir("artifacts", { recursive: true });
   await page.screenshot({ path: "artifacts/mobile-today.png" });
-  await page
-    .getByRole("button", { name: "생각 꺼내놓기", exact: true })
-    .click();
   await page.getByLabel("자유로운 생각 입력").fill("하나\n둘\n셋\n넷\n씨앗");
-  await button(page, "할 일로 나눠 보기").click();
+  await button(page, "생각 정리하기").click();
   await page
     .getByLabel("할 일 1 수정", { exact: true })
     .fill("책상 위 컵 치우기");
-  await button(page, "검토한 할 일 추가").click();
+  await button(page, "한 걸음 모드 시작").click();
   await expect(
     page.getByRole("heading", { name: "책상 위 컵 치우기" }),
   ).toBeVisible();
-  for (let i = 0; i < 4; i++)
-    await button(page, "이만큼 해냈어요 · 완료").click();
+  for (let i = 0; i < 4; i++) await button(page, "완료했어요").click();
   await expect(page.getByText("당신의 작은 행동 끝에")).toBeVisible();
   await page.waitForTimeout(400);
   await page.screenshot({ path: "artifacts/mobile-bloom.png" });
@@ -76,14 +72,16 @@ test("React Native UI: 검토·완료·개화·취소 보관·등록·재실행�
   await openFirst();
   await expect(page.getByText("도감에 담았어요")).toBeVisible();
   await button(page, "꽃 상세 닫기").click();
-  await page.getByRole("tab", { name: "실행", exact: true }).click();
-  await button(page, "나중에 하기 · 씨앗에 보관").click();
+  await page.getByRole("tab", { name: "오늘", exact: true }).click();
+  await button(page, "한 걸음 시작하기").click();
+  await button(page, "나중에 하기").click();
   await page.reload();
-  await page.getByRole("tab", { name: "씨앗", exact: true }).click();
+  await button(page, "씨앗 보관함 열기").click();
   await button(page, "다시 꺼내기").click();
-  await page.getByRole("tab", { name: "실행", exact: true }).click();
+  await page.getByRole("tab", { name: "오늘", exact: true }).click();
+  await button(page, "한 걸음 시작하기").click();
   await expect(page.getByRole("heading", { name: "씨앗" })).toBeVisible();
-  await page.getByRole("tab", { name: "설정", exact: true }).click();
+  await button(page, "설정 열기").click();
   await page.getByRole("switch", { name: "모션 줄이기", exact: true }).click();
   await expect(
     page.getByRole("switch", { name: "모션 줄이기", exact: true }),
@@ -108,8 +106,10 @@ test("React Native UI: 검토·완료·개화·취소 보관·등록·재실행�
     .click();
   await expect(page.getByText("도감에 담았어요")).toBeVisible();
   await button(page, "꽃 상세 닫기").click();
-  await button(page, "꽃 도감").click();
-  await expect(page.getByText("꽃말은 온점.의 창작 문구입니다.")).toBeVisible();
+  await page.getByRole("tab", { name: "도감", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "나의 식물도감" }),
+  ).toBeVisible();
   expect(errors).toEqual([]);
 });
 test("React Native 실제 렌더링: 12종 벡터·작은 화면·감소 모션·손상 백업 보호", async ({
@@ -134,7 +134,7 @@ test("React Native 실제 렌더링: 12종 벡터·작은 화면·감소 모션�
   state.settings.reduceMotion = true;
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  await page.getByRole("tab", { name: "설정", exact: true }).click();
+  await button(page, "설정 열기").click();
   await pickBackup(page, exportBackup(state));
   await page.getByRole("tab", { name: "정원", exact: true }).click();
   await expect(
@@ -175,7 +175,7 @@ test("React Native 실제 렌더링: 12종 벡터·작은 화면·감소 모션�
   await page.mouse.wheel(350, 0);
   await expect(page.getByText("2 / 2", { exact: true })).toBeVisible();
   await page.screenshot({ path: "artifacts/mobile-garden-page2.png" });
-  await page.getByRole("tab", { name: "설정", exact: true }).click();
+  await button(page, "설정 열기").click();
   await pickBackup(page, '{"broken":true}');
   await expect(page.getByRole("alert")).toContainText("백업 파일");
   await page.reload();
@@ -206,7 +206,7 @@ test("원본 웹 JSON을 실제 앱에서 복원하고 삭제 취소로 기록 �
     );
   raw = original.postponeTask(raw, original.activeTask(raw).id);
   await page.goto("/");
-  await page.getByRole("tab", { name: "설정", exact: true }).click();
+  await button(page, "설정 열기").click();
   await pickBackup(page, JSON.stringify(raw));
   await button(page, "기기 데이터 전체 삭제").click();
   await button(page, "취소").click();
@@ -218,10 +218,11 @@ test("원본 웹 JSON을 실제 앱에서 복원하고 삭제 취소로 기록 �
   expect(migrated.thoughts).toEqual(raw.thoughts);
   expect(migrated.flowers).toEqual(raw.flowers);
   await page.reload();
-  await page.getByRole("tab", { name: "씨앗", exact: true }).click();
+  await button(page, "씨앗 보관함 열기").click();
   await expect(page.getByText("나중에 할 일")).toBeVisible();
   await button(page, "다시 꺼내기").click();
-  await page.getByRole("tab", { name: "실행", exact: true }).click();
+  await page.getByRole("tab", { name: "오늘", exact: true }).click();
+  await button(page, "한 걸음 시작하기").click();
   await expect(
     page.getByRole("heading", { name: "나중에 할 일" }),
   ).toBeVisible();

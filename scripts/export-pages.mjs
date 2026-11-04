@@ -18,4 +18,5 @@ const prepared = spawnSync(
   ["scripts/prepare-iphone-web.mjs"],
   { env, stdio: "inherit" },
 );
-process.exit(prepared.status || 0);
+if (prepared.status !== 0) process.exit(prepared.status || 1);
+await import("./prepare-ui-review.mjs");

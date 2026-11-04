@@ -19,6 +19,7 @@ async function files(dir, prefix = "") {
   let result = [];
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const name = prefix + entry.name;
+    if (name === "review") continue; // Review screenshots are not part of the offline app shell.
     if (entry.isDirectory())
       result.push(...(await files(join(dir, entry.name), name + "/")));
     else if (!["sw.js", "_headers"].includes(name)) result.push(name);

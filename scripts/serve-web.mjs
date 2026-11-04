@@ -10,9 +10,13 @@ const routes = new Map([
   ["/sw.js", "web/sw.js"],
   ["/src/app.mjs", "web/app.mjs"],
   ["/src/logic.mjs", "prototype/src/logic.mjs"],
-  ...["mobile-domain", "legacy-mobile", "seasonal", "season-calendar"].map(
-    (n) => [`/src/${n}.mjs`, `src/${n}.mjs`],
-  ),
+  ...[
+    "mobile-domain",
+    "diary",
+    "legacy-mobile",
+    "seasonal",
+    "season-calendar",
+  ].map((n) => [`/src/${n}.mjs`, `src/${n}.mjs`]),
   ["/transfer/", "web/transfer.html"],
   ["/transfer.mjs", "web/transfer.mjs"],
 ]);

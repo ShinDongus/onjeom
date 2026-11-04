@@ -21,11 +21,13 @@ type Props = {
   items: GardenItem[];
   onSelect: (id: string) => void;
   label?: string;
+  season?: string;
 };
 export default function GardenPager({
   items,
   onSelect,
   label = "정원",
+  season = "봄",
 }: Props) {
   const screen = useWindowDimensions();
   const [width, setWidth] = useState(Math.min(screen.width, 480) - 40),
@@ -61,7 +63,20 @@ export default function GardenPager({
   return (
     <View style={s.container}>
       <View
-        style={s.frame}
+        style={[
+          s.frame,
+          {
+            backgroundColor:
+              (
+                {
+                  봄: "#f1f0df",
+                  여름: "#edf1e5",
+                  가을: "#f4eddf",
+                  겨울: "#eff0e8",
+                } as Record<string, string>
+              )[season] || "#f1f0df",
+          },
+        ]}
         onLayout={(e) => {
           if (e.nativeEvent.layout.width > 0)
             setWidth(e.nativeEvent.layout.width);
@@ -119,20 +134,16 @@ export default function GardenPager({
                       preserveAspectRatio="none"
                       aria-hidden
                     >
-                      <Ellipse
-                        cx="165"
-                        cy="32"
-                        rx="149"
-                        ry="7"
-                        fill="#718263"
-                        opacity=".1"
-                      />
-                      <Path d="M15 4H315L330 17H0Z" fill="#d9ccb0" />
-                      <Path d="M0 17H330V25H0Z" fill="#bba685" />
-                      <Path d="M0 17H330" stroke="#eae0ca" strokeWidth="1.5" />
                       <Path
-                        d="M21 25H29V33H21ZM301 25H309V33H301Z"
-                        fill="#a9987c"
+                        d="M3 18Q67 11 116 19T227 18T327 17"
+                        fill="none"
+                        stroke="#c7cfb7"
+                        strokeWidth=".8"
+                      />
+                      <Path
+                        d="M34 23 39 20m106 5 4-4m122 3 4-3"
+                        stroke="#c4cdb4"
+                        strokeWidth="1"
                       />
                     </Svg>
                   </View>
@@ -156,6 +167,7 @@ export default function GardenPager({
                         ]}
                       >
                         <FlowerArt
+                          potted={false}
                           species={item.speciesId}
                           color={item.color}
                           stage={item.flowerId ? 4 : 0}
@@ -176,8 +188,8 @@ export default function GardenPager({
                         importantForAccessibility="no-hide-descendants"
                         style={[s.cell, s.empty, { height: cellHeight }]}
                       >
-                        <FlowerArt stage={0} size={art} />
-                        <Text style={s.emptyText}>빈 화분</Text>
+                        <FlowerArt stage={1} potted={false} size={art} />
+                        <Text style={s.emptyText}>아직 여백</Text>
                       </View>
                     );
                   })}
@@ -222,11 +234,11 @@ const s = StyleSheet.create({
   container: { gap: 16 },
   frame: {
     width: "100%",
-    borderRadius: 28,
+    borderRadius: 4,
     overflow: "hidden",
-    backgroundColor: "#e7eada",
+    backgroundColor: "#f2f2e5",
     borderWidth: 1,
-    borderColor: "#dce1ce",
+    borderColor: "#e3e3d1",
   },
   row: { flexDirection: "row", gap: 2 },
   shelf: { position: "absolute", bottom: 22, left: 0, right: 0, height: 40 },
@@ -246,7 +258,7 @@ const s = StyleSheet.create({
     alignSelf: "stretch",
     textAlign: "center",
   },
-  note: { fontSize: 9, lineHeight: 15, color: "#718168" },
+  note: { fontSize: 10, lineHeight: 15, color: "#718168" },
   empty: { opacity: 0.35 },
   emptyText: { fontSize: 10, color: "#899780", marginTop: 0, lineHeight: 32 },
   controls: {
@@ -260,7 +272,7 @@ const s = StyleSheet.create({
     minHeight: 44,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#e5e9d9",
+    backgroundColor: "transparent",
     borderRadius: 22,
   },
   arrowText: { fontSize: 29, color: "#49674e", lineHeight: 32 },

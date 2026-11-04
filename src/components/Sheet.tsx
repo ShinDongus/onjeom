@@ -1,4 +1,5 @@
 import React from "react";
+import DiaryPaper from "./PaperTexture";
 import {
   Animated,
   KeyboardAvoidingView,
@@ -48,6 +49,7 @@ export default function Sheet({
             { opacity, paddingBottom: Math.max(insets.bottom, 14) },
           ]}
         >
+          <DiaryPaper />
           <View style={s.top}>
             <View style={s.handle} />
             <Pressable
@@ -87,12 +89,12 @@ const s = StyleSheet.create({
     flexShrink: 1,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
-    backgroundColor: "#fffdf5",
+    backgroundColor: "#faf6eb",
     shadowColor: "#203821",
-    shadowOpacity: 0.15,
-    shadowRadius: 26,
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
     shadowOffset: { width: 0, height: -8 },
-    elevation: 12,
+    elevation: 2,
     overflow: "hidden",
   },
   top: { height: 36, alignItems: "center", justifyContent: "center" },

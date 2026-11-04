@@ -1,4 +1,5 @@
 /** Native extensions of the unmodified original pure domain. No SDK or network. */
+import { validateDiary } from "./diary.mjs";
 import {
   createInitialState,
   finishTask,
@@ -338,6 +339,7 @@ export function migrateState(input) {
     )
       throw Error("꽃 데이터가 손상되었습니다.");
   }
+  validateDiary(data.diary);
   // The original exposes deleteTask, including completed records; do not invent missing history.
   if (
     data.tasks.filter((t) => t.status === "done").length >

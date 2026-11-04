@@ -70,3 +70,21 @@ GitHub Actions 실행 https://github.com/ShinDongus/onjeom/actions/runs/41661230
 npm run check, npm run format:check, iOS/Android Hermes 번들 생성 통과. 실제 iPhone/Safari 설치·터치·키보드·큰 글꼴·스크린리더, 네이티브 런타임/SQLite 실행은 이번에 수행하지 않았다. 원본 기반 별도 PWA의 Chromium 4개 테스트는 이번 UI 변경 범위 밖으로 재실행하지 않았으며 원본 무결성과 도메인은 31개 테스트에 포함했다. 공식 앱 화면 직접 조사도 미완료다.
 
 온실 UI 공개 배포 확인: 소스 03e09c9, 배포 6363c63f81e578adc753ace42ca649f3344e1408. GitHub 실행 https://github.com/ShinDongus/onjeom/actions/runs/41767070214 에서 해당 배포의 built 상태와 공개 HTML의 정확한 일치를 검증했다. 새 web index-16d456e08b9c65eaaa8a80f3866f04f8.js, 설치 스크립트·아이콘·매니페스트·서비스 워커 모두 HTTP200. 검증 트리거 소스 004376db6c266288698cd4aa44db463ae0becc4a와 보고서 sourceSha, expectedCommit과 배포 SHA가 일치하고 verified=true, phase=ready임을 확인했다. 결과 커밋 7bd109ed16fa6e3a2966aed1a38b1bb18483e032를 수신했다. 공개 주소의 HTTP 검증이며 실사이트 전체 브라우저 기능/실물 iPhone 검증과 구분한다.
+
+## 감성 다이어리 전면 개편 — 2026-11-04
+
+현재 제품은 오늘/정원/도감/기록 네 탭이다. 큰 브랜드 헤더와 온실 중심 홈을 날짜·요일·줄노트·메모·작은 완료 표시·식물 스티커로 바꿨다. 실행은 한 가지 작업, 정원은 계절 종이의 3×3 페이지, 도감은 한 종씩 펼치는 표본 책, 기록은 달력→날짜별 페이지다. 씨앗과 설정은 보조 동선이다. 장식은 자체 SVG이며 새 의존성을 추가하지 않았다.
+
+기존 thoughts/tasks/flowers와 완료·확률·광고 규칙, DB user_version 3은 유지한다. 선택형 diary[day]의 draft/note/updatedAt만 추가했고 날짜·길이·형식을 검사한다. 원본 아카이브 무결성, v1/v2/v3 복원, 실제 SQLite 재열기·백업/삭제/복원에서 이 필드까지 검증했다. 원본에 없던 날짜나 삭제된 과거 작업은 추정하지 않는다. 저장한 글은 날짜가 바뀌어 앱을 다시 활성화해도 이전 날에 남고, 새 날짜의 초안을 읽는다. 저장하지 않은 글/검토는 앱 종료나 날짜 전환까지 복원을 보장하지 않는다.
+
+최종 실행: npm test **34개**, npm run test:mobile **8개**, npm run test:browser **4개**, npm run test:pages **1개** 통과. 총 **47개**, 최종 실패/스킵 없음. TypeScript·Prettier·git diff 검사와 iOS/Android Hermes 번들 생성도 통과했다. 네이티브 번들 생성은 실제 설치/런타임 검증이 아니다.
+
+모바일 UI 검증은 생각 저장과 재실행, 원문 저장 후 규칙 분리·사용자 검토, 작은 단계, 완료와 개화, 광고 취소/미제공/등록, 씨앗 복원, 손상 백업 거절, 데이터 삭제/복원, 오프라인 완료, 12송이의 9+3 페이지, 320×640 및 390×480의 버튼 접근/스크롤을 포함한다. 추가로 달력의 과거 날짜에서 생각·실제 완료·꽃·짧은 기록을 조회하고, 수정한 기록의 저장 완료를 기다린 뒤 재실행/백업/삭제/복원했다. 도감은 금빛 희귀 색상·개화 날짜·할로윈 시즌 이름을 실제 UI에서 확인했다. 날짜 전환 재활성화도 브라우저 시뮬레이션으로 확인했다.
+
+초기 실행에서 기록 입력/저장 버튼의 부분 일치 선택자가 충돌했고 정확한 접근성 이름으로 보완했다. 비동기 저장 직후 기다리지 않고 재접속한 테스트를 저장 완료 표시 뒤 재접속하도록 수정했다. 원본 기반 웹 회귀 검사에서는 새 diary 모듈의 서버 경로와 오프라인 CORE 누락으로 4건이 실패했으며, 실행용 scripts/serve-web.mjs와 web/sw.js(v2)에 추가하고 4건 모두 재실행해 통과했다. prototype/ 원본은 수정하지 않았다. Pages 비교 문서의 로컬 미리보기에서는 폴더 index 처리가 없어 404가 발생했고, 서버가 GitHub Pages와 같이 하위 폴더 index.html을 제공하도록 수정한 뒤 테스트를 통과했다.
+
+캡처는 docs/screenshots/01~09(홈, 입력, 검토, 실행, 정원, 도감, 달력, 기록 상단, 기록 하단)와 before-home/garden/focus에 준비했다. 모두 테스트 예시 데이터다. docs/ui-review.html에서 비교하며 Pages 빌드의 /review/로 복사한다. 앱 사전 캐시에서는 이 문서를 제외한다. 스크린샷을 직접 검토하고 검토 시트와 실행 화면이 실제 열린 상태인지 기다린 뒤 캡처하도록 했다. 파일 URL 미리보기는 브라우저 관리 정책에서 차단되어 HTTP 미리보기로 비교 문서와 이미지 로딩을 확인했다.
+
+미실행/미구현: 실제 iPhone/Safari 홈 설치·소프트웨어 키보드·터치 제스처·큰 글꼴·VoiceOver/TalkBack, 실기기 SQLite 및 앱 재부팅, 실제 광고/결제 SDK, 공식 추석 일정 데이터. 축소 뷰포트는 실제 키보드와 다르며 시스템 공유/파일 선택도 네이티브 실기기 검증이 남았다. App Store 출시·APK/IPA 생성은 수행하지 않았다.
+
+주요 변경: App.tsx, src/components/{HomeScreen,FocusScreen,GardenPager,CatalogScreen,RecordsScreen,DiaryPaper,AppIcon,Sheet,diary-theme}, src/diary.mjs, src/mobile-domain.mjs의 검증 호출. 저장 어댑터는 유지했다. scripts/{serve-web,serve-mobile-preview,export-pages,prepare-iphone-web,prepare-ui-review}, 실행용 web/sw.js는 모듈/비교 문서 제공을 연결한다. tests/diary.test.mjs·storage.test.mjs·mobile/diary.spec.mjs와 기존 모바일/Pages 테스트, README·인계 문서·비교 HTML/캡처를 갱신했다.
