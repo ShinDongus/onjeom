@@ -2,7 +2,7 @@
 
 현재 웹앱 주소: **https://shindongus.github.io/onjeom/**
 
-최신 UI는 **오늘 / 정원 / 도감 / 기록**의 네 탭을 가진 종이 다이어리입니다. 홈에서 바로 생각을 쓰고, 검토 메모를 거쳐 한 걸음씩 실행합니다. 달력에서 지난 날짜의 생각·완료 표시·꽃·짧은 기록을 펼칩니다. [화면 비교](https://shindongus.github.io/onjeom/review/)와 [캡처 원본](docs/ui-review.html)을 준비했습니다. 최신 게시 검증은 `.github/pages-live-status.json`에서 확인합니다.
+최신 UI는 **오늘 / 정원 / 도감 / 기록**의 네 탭을 가진 종이 다이어리입니다. 홈에서 바로 생각을 쓰고, 검토 메모를 거쳐 한 걸음씩 실행합니다. 달력에서 지난 날짜의 생각·완료 표시·꽃·짧은 기록을 펼칩니다. [화면 비교](https://shindongus.github.io/onjeom/review/)와 [캡처 원본](docs/ui-review.html)을 준비했습니다. 2026-11-04 앱과 비교 페이지·새 화면 캡처 9개의 실제 공개 응답 검증을 통과했습니다. 최신 게시 검증은 `.github/pages-live-status.json`에서 확인합니다.
 
 2026-11-04 GitHub Pages가 `gh-pages / (root)`에서 배포 완료된 것을 확인했고, GitHub의 검증 작업에서 앱 HTML·웹 번들·설치 스크립트·매니페스트·Apple Touch 아이콘·서비스 워커가 모두 HTTP200으로 응답했습니다. 아이폰 Safari에서 열어 공유 → 홈 화면에 추가로 설치할 수 있습니다. 실물 아이폰 설치 자체는 별도 확인이 필요합니다. 아래의 초기 설정 실패 기록은 활성화 이전 상황입니다.
 

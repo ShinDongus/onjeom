@@ -98,3 +98,5 @@ npm run check, npm run format:check, iOS/Android Hermes 번들 생성 통과. �
 추가 UI 검사는 이전 일기/기분을 복원하고 수정한 뒤 짧은 기록과 함께 백업·삭제·복원하는 흐름을 확인한다. 선택형 Groq는 본인 서버/접근 코드를 메모리에 설정하고 현재 입력만 별도 동의 후 보내며, 동의 취소 때 요청 없음, 요청 본문이 현재 입력 하나뿐임, 결과 사용자 검토, 재실행 시 연결 정보가 비어 있음을 모의 HTTP로 검증했다. 실제 Groq 과금 계정·배포 서버·API 키를 연결해 호출하지 않았다. 기본 규칙 분리도 그대로 동작한다.
 
 원격 자동 배포와 로컬 수동 게시가 경합하지 않도록 통합 소스 푸시 후 배포 워크플로우를 사용한다. 공개 사이트·비교 페이지의 실제 응답 검증 결과는 아래 최신 배포 기록에 별도로 남긴다. 원격에 있던 journals/백엔드 기능의 상세는 docs/GROQ_SETUP.md와 기존 테스트를 함께 참고한다.
+
+최신 공개 배포 확인: 통합 소스 ae095a58ae20dc28b72fc680087a2e01dab41a65가 자동 배포되어 gh-pages a2200c19b3a09468d350385ca871695d3c4f883d에 반영됐다. 검증 실행 https://github.com/ShinDongus/onjeom/actions/runs/41776879709 의 sourceSha는 50e44efdf471d12b1585a2dc1fcbb44863512c0d이고 expectedCommit/build.commit이 해당 배포 SHA와 일치한다. verified=true, phase=ready, build.status=built를 확인했다. 공개 HTML은 최신 배포의 index.html과 동일하며 새 web index-703f0d55305c31ec0d37375608ffe221.js, 설치 자산, /review/ 비교 페이지와 새 화면 PNG 9개가 HTTP200/올바른 MIME으로 응답했다. 결과 커밋 121e0f39dc6d610876155e1e4362c92a8fea8233를 수신했다. 공개 HTTP 검증과 로컬 기능 테스트이며 실물 iPhone 검증은 별도다.
