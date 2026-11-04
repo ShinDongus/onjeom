@@ -36,7 +36,14 @@ export function saveJournal(state, day, patch, updatedAt = new Date().toISOStrin
   else journals[day] = next;
   return { ...state, journals };
 }
-const entryDay = (stamp) => typeof stamp === "string" ? stamp.slice(0, 10) : null;
+const entryDay = (stamp) => {
+  if (typeof stamp !== "string" || !stamp) return null;
+  if (isJournalDay(stamp)) return stamp;
+  const d = new Date(stamp);
+  if (Number.isNaN(d.getTime())) return null;
+  const p = (n) => String(n).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
+};
 export function diaryForDay(state, day) {
   if (!isJournalDay(day)) throw Error("날짜가 올바르지 않습니다.");
   return {
