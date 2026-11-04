@@ -4,6 +4,8 @@ import FlowerArt from "./FlowerArt";
 type Props = {
   season: string;
   progress: number;
+  variant?: "home" | "garden";
+  height?: number;
   flowers?: { id: string; speciesId: string; color: string }[];
 };
 const colors: Record<string, string> = {
@@ -12,7 +14,13 @@ const colors: Record<string, string> = {
   가을: "#f2e9d9",
   겨울: "#eaf0f1",
 };
-export default function GardenScene({ season, progress, flowers = [] }: Props) {
+export default function GardenScene({
+  season,
+  progress,
+  flowers = [],
+  variant = "garden",
+  height = 280,
+}: Props) {
   const messages = [
     "씨앗은 당신의 속도를 기다려요.",
     "작은 새싹이 고개를 들었어요.",
@@ -21,7 +29,16 @@ export default function GardenScene({ season, progress, flowers = [] }: Props) {
   ];
   return (
     <View
-      style={[s.scene, { backgroundColor: colors[season] }]}
+      style={[
+        s.scene,
+        { backgroundColor: colors[season], height },
+        variant === "home" && {
+          borderTopLeftRadius: 160,
+          borderTopRightRadius: 160,
+          borderBottomLeftRadius: 30,
+          borderBottomRightRadius: 30,
+        },
+      ]}
       accessibilityLabel={`${season}의 정원, 성장 ${progress}/4`}
     >
       <View style={s.sun} />
@@ -30,7 +47,7 @@ export default function GardenScene({ season, progress, flowers = [] }: Props) {
       <View style={s.hill} />
       <View style={s.hillBack} />
       <View style={s.plant}>
-        <FlowerArt stage={progress} size={140} />
+        <FlowerArt stage={progress} size={variant === "home" ? 120 : 140} />
       </View>
       <View style={s.memories}>
         {flowers.slice(0, 3).map((f) => (
@@ -59,7 +76,7 @@ const s = StyleSheet.create({
     height: 280,
     borderRadius: 28,
     overflow: "hidden",
-    marginVertical: 8,
+    marginVertical: 0,
   },
   sun: {
     position: "absolute",
@@ -101,7 +118,7 @@ const s = StyleSheet.create({
     backgroundColor: "#b0c4a5",
     opacity: 0.25,
   },
-  plant: { position: "absolute", bottom: 62, alignSelf: "center" },
+  plant: { position: "absolute", bottom: 52, alignSelf: "center" },
   memories: {
     position: "absolute",
     bottom: 62,

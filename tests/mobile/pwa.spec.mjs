@@ -18,6 +18,9 @@ test("홈 화면 설치 메타데이터와 캐시된 앱의 오프라인 실행�
   expect(icon.headers()["content-type"]).toBe("image/png");
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  await page
+    .getByRole("button", { name: "생각 꺼내놓기", exact: true })
+    .click();
   await page.getByLabel("자유로운 생각 입력").fill("오프라인에서 할 일");
   await page
     .getByRole("button", { name: "할 일로 나눠 보기", exact: true })

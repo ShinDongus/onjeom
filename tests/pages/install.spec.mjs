@@ -7,7 +7,7 @@ test("Pages 하위 경로에서 설치 자산과 오프라인 기록 보존", as
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("./");
   await expect(
-    page.getByRole("button", { name: "할 일로 나눠 보기", exact: true }),
+    page.getByRole("button", { name: "생각 꺼내놓기", exact: true }),
   ).toBeVisible();
   const bundles = await page
     .locator("script[src]")
@@ -29,6 +29,9 @@ test("Pages 하위 경로에서 설치 자산과 오프라인 기록 보존", as
   expect(
     await page.evaluate(() => navigator.serviceWorker.controller.scriptURL),
   ).toContain("/onjeom/sw.js");
+  await page
+    .getByRole("button", { name: "생각 꺼내놓기", exact: true })
+    .click();
   await page.getByLabel("자유로운 생각 입력").fill("아이폰에서 첫 한 걸음");
   await page
     .getByRole("button", { name: "할 일로 나눠 보기", exact: true })

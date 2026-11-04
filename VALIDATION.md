@@ -52,3 +52,7 @@ GitHub Actions 실행 https://github.com/ShinDongus/onjeom/actions/runs/41661230
 ## 실제 사이트 배포 확인 — 2026-11-04
 
 사용자의 Pages 설정 후 GitHub 검증 실행 https://github.com/ShinDongus/onjeom/actions/runs/41756901625 가 통과함. `.github/pages-live-status.json`의 sourceSha 13cfe481475d095580749fd375b1efabf313a05c, 결과 커밋 3f2624c7caf7ef8558bab70039414086db716722를 확인함. Pages source gh-pages /, build_type legacy, status built이며 배포 커밋은 0243779b8cad3d785f8a84c0ec53c7a9c92f09c6. 실제 https://shindongus.github.io/onjeom/ HTML, manifest.webmanifest, apple-touch-icon.png, sw.js, web index JS, install.js의 HTTP200과 올바른 MIME 유형을 확인함. 매니페스트의 이름 온점. 및 standalone 표시 모드도 확인함. 이 검증은 GitHub 측에서 실제 공개 주소로 수행한 HTTP 검증이며, 이 실행 환경의 직접 네트워크 접근은 여전히 차단돼 있음. 실물 iPhone의 Safari 설치/렌더링이나 전체 기능을 실사이트 브라우저에서 테스트했다는 뜻은 아님. 기존 로컬 브라우저 기능 테스트와 구분함. 워크플로우 추가 후 기존 도메인·SQLite 테스트 31개도 통과함.
+
+## 모바일 앱 화면 개편 — 2026-11-04
+
+시작 화면·입력/검토 시트·아이콘 탭·3×3 가상화 정원·꽃 상세 시트를 구현함. npm test 31개, npm run test:mobile 5개, npm run test:pages 1개, TypeScript 검사와 iOS/Android Hermes 번들 생성 통과. 12송이에서 첫 페이지 9송이, 다음 페이지 3송이+빈자리6칸, 빈 정원9칸, 페이지 경계 버튼, 실제 가로 휠 스크롤, 화면 크기 변경, 상세 기록, 광고 취소 보존 및 백업 복구를 확인함. 스크린샷 mobile-today.png, mobile-garden.png, mobile-garden-page2.png, desktop-home.png를 직접 검토함. 브라우저 가로 스크롤을 테스트했고 실물 iOS/Android 터치 스와이프는 미검증. 원본 아카이브·도메인·저장 스키마는 변경하지 않음.

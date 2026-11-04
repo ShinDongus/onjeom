@@ -27,3 +27,5 @@ GitHub Pages /onjeom/ 경로 지원은 app.config.ts, export:pages, test:pages�
 GitHub 내부 설정 자동화도 실행했습니다. `.github/workflows/configure-pages.yml`과 `.github/pages-status.json`을 확인하세요. 실행 41661230637은 create_settings에서 403 Resource not accessible by integration으로 거부됐습니다. 이는 실제 GitHub 자동화 인증의 사이트 생성 권한 부족입니다. 전체 접근 모드가 GitHub 관리자 권한을 주지는 않습니다. PAGES_TOKEN 등 적절한 인증이 준비되기 전에는 같은 작업을 반복하거나 설정이 끝났다고 주장하지 마세요. 토큰을 채팅에 요청하거나 로그에 출력하지 마세요. 관리 인증이 준비되면 워크플로우를 재실행해 실제 사이트와 설치 메타데이터를 확인하세요.
 
 최신 상태(2026-11-04): 사용자가 Pages 설정을 완료했고 실제 공개 사이트 검증이 통과했습니다. `.github/pages-live-status.json`의 verified:true, phase:ready 및 실행 41756901625를 보세요. 사이트 https://shindongus.github.io/onjeom/ 는 gh-pages / 배포 커밋 0243779에서 HTML/JS/설치파일 HTTP200을 확인했습니다. 이전 pages-status.json의 생성권한 403은 과거 기록입니다. 현재 상태를 그 실패만으로 판단하거나 사용자에게 Pages 활성화를 다시 요구하지 마세요. 실물 아이폰 설치는 별도 검증 대상입니다.
+
+최신 UI: HomeScreen은 입력 폼 대신 화분과 단일 작업 중심이며 생각 입력/규칙 분리/사용자 검토는 compose Sheet에 있습니다. GardenPager는 3×3(페이지당9칸) 가상화 FlatList와 스와이프/이전·다음 제어를 제공합니다. 꽃별 정보·무료 카드·도감 등록은 선택한 꽃의 상세 Sheet로 옮겼습니다. 이전의 전체 꽃 카드 목록으로 되돌리지 마세요. native UI 테스트는 5개이고 정원 페이징·빈칸·복구·광고취소를 유지하세요. 저장 스키마는 v3 그대로입니다.

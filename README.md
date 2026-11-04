@@ -69,7 +69,7 @@ Expo SDK 54와 호환되는 Expo Go 또는 개발 빌드를 사용합니다. 최
 npm test                   # 원본 11개 포함 총 31개 도메인/SQLite/무결성 테스트
 npm run test:original       # 첨부 원본 테스트 11개 그대로 실행
 npm run test:browser        # 원본 기반 PWA 사용자 흐름 4개
-npm run test:mobile         # 실제 React Native UI·PWA 사용자 흐름 4개 (웹 번들 자동 생성)
+npm run test:mobile         # 실제 React Native UI·PWA 사용자 흐름 5개 (웹 번들 자동 생성)
 npm run check              # TypeScript
 npm run format:check       # 원본 폴더는 포맷 대상에서 제외
 npm run export             # iOS·Android Hermes 번들, 설치 파일은 아님
@@ -136,3 +136,11 @@ npm run apk:android
 `prototype/`는 수정 없는 첨부 원본, `src/logic.mjs`는 그 도메인을 재노출하는 공유 진입점, `src/mobile-domain.mjs`는 검토/스키마/백업 확장입니다. `src/legacy-mobile.mjs`는 이전 모바일 데이터 읽기 전용이고 새 작업 규칙으로 사용하지 않습니다. `App.tsx`는 Expo UI, `src/storage.mjs`는 SQLite, `web/`는 원본 기반 실행 UI·전환 도구입니다. `src/components/`는 정원·꽃·공통 시트, `flower-art.mjs`/`flower-card.mjs`는 벡터 그림과 무료 카드, `platform-store`/`device-files`의 플랫폼별 파일은 SQLite·공유와 브라우저 미리보기의 저장·다운로드를 연결합니다.
 
 남은 작업: 공식 추석 일정 검증·등록, 실기기 QA와 큰 글꼴/VoiceOver/TalkBack, 긴 기록 목록 가상화, 최신 Expo SDK 업그레이드/개발 빌드 호환성 확인, 실제 광고/결제 서버 검증과 스토어 설정. 원본 아카이브의 설명은 당시 상태를 기록하므로 현재 기능은 이 README를 기준으로 봅니다.
+
+## 모바일 화면 개편 — 2026-11-04
+
+첫 화면은 화분·현재 할 일 한 가지·생각 꺼내놓기 버튼으로 구성합니다. 긴 입력 폼은 시트에서 열고, 규칙 분리 결과를 직접 검토한 뒤 확정합니다. 모바일 너비를 유지하는 앱 프레임과 아이콘 탭을 사용합니다.
+
+정원과 도감은 한 페이지에 3×3, 총 9칸입니다. 좌우 스크롤/스와이프 및 이전·다음 버튼으로 이동하며 마지막 페이지의 남는 칸과 빈 정원도 빈자리로 표시합니다. FlatList로 주변 페이지만 렌더링합니다. 꽃을 누르면 꽃말·개화일·원래 행동·무료 카드·선택형 도감 등록이 열립니다. 도감 등록 여부는 격자의 작은 표식으로 확인합니다.
+
+원본 도메인·백업 형식·SQLite 스키마는 바꾸지 않습니다. UI 테스트는 새 입력 시트 경로, 9+3송이 두 페이지, 빈자리, 페이지 이동/가로 스크롤, 320px 크기와 상세 열기, 광고 취소 보존, 원본 복구를 확인합니다. 새 디자인이 보이지 않으면 새로고침 후 열린 온점 탭/홈 화면 앱을 모두 닫고 다시 여세요. 기존 서비스 워커는 열린 창이 끝난 뒤 새 버전을 적용합니다.

@@ -26,9 +26,12 @@ test("React Native UI: 검토·완료·개화·취소 보관·등록·재실행�
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
-  await expect(button(page, "할 일로 나눠 보기")).toBeVisible();
+  await expect(button(page, "생각 꺼내놓기")).toBeVisible();
   await mkdir("artifacts", { recursive: true });
   await page.screenshot({ path: "artifacts/mobile-today.png" });
+  await page
+    .getByRole("button", { name: "생각 꺼내놓기", exact: true })
+    .click();
   await page.getByLabel("자유로운 생각 입력").fill("하나\n둘\n셋\n넷\n씨앗");
   await button(page, "할 일로 나눠 보기").click();
   await page
@@ -51,17 +54,28 @@ test("React Native UI: 검토·완료·개화·취소 보관·등록·재실행�
   );
   await button(page, "기억의 정원에서 만나기").click();
   await page.setViewportSize({ width: 390, height: 844 });
+  const openFirst = () =>
+    page
+      .getByTestId("garden-page-0")
+      .getByTestId("garden-flower")
+      .first()
+      .click();
+  await openFirst();
   await button(page, "도감에 담기").click();
   await button(page, "취소하고 꽃 보관").click();
   await page.reload();
   await page.getByRole("tab", { name: "정원", exact: true }).click();
+  await openFirst();
   await expect(button(page, "도감에 담기")).toBeVisible();
   await button(page, "도감에 담기").click();
   await button(page, "테스트: 광고 제공 안 됨").click();
+  await openFirst();
   await expect(button(page, "도감에 담기")).toBeVisible();
   await button(page, "도감에 담기").click();
   await button(page, "테스트: 보상 완료").click();
+  await openFirst();
   await expect(page.getByText("도감에 담았어요")).toBeVisible();
+  await button(page, "꽃 상세 닫기").click();
   await page.getByRole("tab", { name: "실행", exact: true }).click();
   await button(page, "나중에 하기 · 씨앗에 보관").click();
   await page.reload();
@@ -87,7 +101,13 @@ test("React Native UI: 검토·완료·개화·취소 보관·등록·재실행�
   await pickBackup(page, backup);
   await page.reload();
   await page.getByRole("tab", { name: "정원", exact: true }).click();
+  await page
+    .getByTestId("garden-page-0")
+    .getByTestId("garden-flower")
+    .first()
+    .click();
   await expect(page.getByText("도감에 담았어요")).toBeVisible();
+  await button(page, "꽃 상세 닫기").click();
   await button(page, "꽃 도감").click();
   await expect(page.getByText("꽃말은 온점.의 창작 문구입니다.")).toBeVisible();
   expect(errors).toEqual([]);
@@ -117,19 +137,56 @@ test("React Native 실제 렌더링: 12종 벡터·작은 화면·감소 모션�
   await page.getByRole("tab", { name: "설정", exact: true }).click();
   await pickBackup(page, exportBackup(state));
   await page.getByRole("tab", { name: "정원", exact: true }).click();
-  await expect(button(page, "도감에 담기")).toHaveCount(12);
+  await expect(
+    page.getByTestId("garden-page-0").getByTestId("garden-flower"),
+  ).toHaveCount(9);
+  await expect(
+    page.getByTestId("garden-page-0").getByTestId("garden-empty"),
+  ).toHaveCount(0);
+  await expect(button(page, "이전 정원 페이지")).toBeDisabled();
   await page.screenshot({ path: "artifacts/mobile-garden.png" });
+  await button(page, "다음 정원 페이지").click();
+  await expect(page.getByText("2 / 2", { exact: true })).toBeVisible();
+  await expect(
+    page.getByTestId("garden-page-1").getByTestId("garden-flower"),
+  ).toHaveCount(3);
+  await expect(
+    page.getByTestId("garden-page-1").getByTestId("garden-empty"),
+  ).toHaveCount(6);
+  await expect(button(page, "다음 정원 페이지")).toBeDisabled();
+  await page
+    .getByTestId("garden-page-1")
+    .getByTestId("garden-flower")
+    .first()
+    .click();
+  await expect(
+    page.getByRole("heading", { name: state.flowers[9].name, exact: true }),
+  ).toBeVisible();
+  await button(page, "꽃 상세 닫기").click();
   await page.setViewportSize({ width: 320, height: 640 });
-  const horizontalOverflow = await page.evaluate(
-    () => document.documentElement.scrollWidth > window.innerWidth,
-  );
-  expect(horizontalOverflow).toBe(false);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > window.innerWidth,
+    ),
+  ).toBe(false);
+  await button(page, "이전 정원 페이지").click();
+  await expect(page.getByText("1 / 2", { exact: true })).toBeVisible();
+  await page.getByTestId("garden-pager").hover();
+  await page.mouse.wheel(350, 0);
+  await expect(page.getByText("2 / 2", { exact: true })).toBeVisible();
+  await page.screenshot({ path: "artifacts/mobile-garden-page2.png" });
   await page.getByRole("tab", { name: "설정", exact: true }).click();
   await pickBackup(page, '{"broken":true}');
   await expect(page.getByRole("alert")).toContainText("백업 파일");
   await page.reload();
   await page.getByRole("tab", { name: "정원", exact: true }).click();
-  await expect(button(page, "도감에 담기")).toHaveCount(12);
+  await expect(
+    page.getByTestId("garden-page-0").getByTestId("garden-flower"),
+  ).toHaveCount(9);
+  await button(page, "다음 정원 페이지").click();
+  await expect(
+    page.getByTestId("garden-page-1").getByTestId("garden-flower"),
+  ).toHaveCount(3);
 });
 
 test("원본 웹 JSON을 실제 앱에서 복원하고 삭제 취소로 기록 보존", async ({
