@@ -662,7 +662,7 @@ function Onjeom() {
               기기에서 규칙 기반으로 정리하거나, 원할 때만 Groq AI로 정리할 수 있어요.
             </Text>
             <Button
-              title="규칙 기반으로 나눠 보기 · 서버 전송 없음"
+              title="할 일로 나눠 보기"
               disabled={busy || groqBusy || !thought.trim()}
               onPress={() =>
                 void ruleSeparator
