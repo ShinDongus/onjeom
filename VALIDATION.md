@@ -48,3 +48,7 @@ Expo가 지원하는 app.config.ts에서 /onjeom baseUrl을 적용함. `.cjs` �
 ## GitHub 내부 자동 설정 실행
 
 GitHub Actions 실행 https://github.com/ShinDongus/onjeom/actions/runs/41661230637 에서 기존 사이트 조회 후 create_settings 단계가 실제 GitHub HTTP403, Resource not accessible by integration으로 실패함. `.github/pages-status.json`의 sourceSha 7cc80eaccdb3a82794bda4f08baa86de9eae08bf와 해당 워크플로우 커밋의 일치를 확인했고 결과 커밋 053d292bf4000289ab49302fb54f6caf675c6906을 수신함. GitHub의 관리 권한 거부를 다른 권한으로 우회하거나 저장소 공개 상태를 바꾸지 않음. Pages는 아직 활성화 완료·실제 공개 접속 검증 상태가 아님. 자동화는 PAGES_TOKEN이 제공되면 그 인증을 사용하도록 준비돼 있으나 값은 코드/결과에 기록하지 않음. 기존 npm test 31개는 통과했고 워크플로우 YAML 구문 검사를 수행함.
+
+## 실제 사이트 배포 확인 — 2026-11-04
+
+사용자의 Pages 설정 후 GitHub 검증 실행 https://github.com/ShinDongus/onjeom/actions/runs/41756901625 가 통과함. `.github/pages-live-status.json`의 sourceSha 13cfe481475d095580749fd375b1efabf313a05c, 결과 커밋 3f2624c7caf7ef8558bab70039414086db716722를 확인함. Pages source gh-pages /, build_type legacy, status built이며 배포 커밋은 0243779b8cad3d785f8a84c0ec53c7a9c92f09c6. 실제 https://shindongus.github.io/onjeom/ HTML, manifest.webmanifest, apple-touch-icon.png, sw.js, web index JS, install.js의 HTTP200과 올바른 MIME 유형을 확인함. 매니페스트의 이름 온점. 및 standalone 표시 모드도 확인함. 이 검증은 GitHub 측에서 실제 공개 주소로 수행한 HTTP 검증이며, 이 실행 환경의 직접 네트워크 접근은 여전히 차단돼 있음. 실물 iPhone의 Safari 설치/렌더링이나 전체 기능을 실사이트 브라우저에서 테스트했다는 뜻은 아님. 기존 로컬 브라우저 기능 테스트와 구분함. 워크플로우 추가 후 기존 도메인·SQLite 테스트 31개도 통과함.

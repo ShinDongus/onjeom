@@ -1,5 +1,9 @@
 # 온점.
 
+현재 웹앱 주소: **https://shindongus.github.io/onjeom/**
+
+2026-11-04 GitHub Pages가 `gh-pages / (root)`에서 배포 완료된 것을 확인했고, GitHub의 검증 작업에서 앱 HTML·웹 번들·설치 스크립트·매니페스트·Apple Touch 아이콘·서비스 워커가 모두 HTTP200으로 응답했습니다. 아이폰 Safari에서 열어 공유 → 홈 화면에 추가로 설치할 수 있습니다. 실물 아이폰 설치 자체는 별도 확인이 필요합니다. 아래의 초기 설정 실패 기록은 활성화 이전 상황입니다.
+
 생각을 자유롭게 내려놓고 하나씩 실제 행동으로 옮기면 어느새 꽃이 피어나는 한국어 실행 앱입니다. 치료·진단, 집중 타이머, 연속 출석, 식물 시들기, 미완료 페널티는 없습니다.
 
 React Native / Expo 모바일 앱과 원본을 바탕으로 한 HTML/PWA가 순수 도메인 로직을 공유합니다. 첨부받은 `onjeom-codex-ready.zip`은 **`prototype/`에 모든 파일을 바이트 그대로 보존**했습니다. `prototype-source.json`의 SHA-256을 자동 테스트로 검증합니다. 원본 지침은 루트 `AGENTS.md`에도 적용합니다.
@@ -83,7 +87,7 @@ Chromium 기본 경로는 `/usr/bin/chromium`이며 `CHROMIUM_PATH`로 변경할
 
 React Native 웹앱에 설치용 매니페스트, 180px Apple Touch 아이콘, 192/512px 아이콘과 오프라인 앱 셸을 포함했습니다. 앱을 열어 한 번 캐싱한 뒤에는 네트워크가 없어도 기기 내 기록을 읽고 작업을 완료·저장할 수 있습니다. 업데이트는 열린 앱을 강제로 새로고침하지 않고 기존 창을 닫은 뒤 적용합니다.
 
-설치하려면 **HTTPS 공개 주소로 먼저 배포**해야 합니다. `npm run export:preview`로 생성한 `dist-preview/` 전체가 정적 호스팅의 웹 루트에 있어야 합니다. `npm run export:preview`는 도메인 루트용이고 `npm run export:pages`는 GitHub Pages `/onjeom/` 경로용입니다. `app.config.ts`가 Expo의 baseUrl을 호스팅 경로에 맞게 설정하며 아이콘·설치 스크립트·오프라인 셸도 같은 경로를 사용합니다. 배포 파일은 `gh-pages` 브랜치에 업로드했지만 Pages 활성화와 실제 사이트 응답은 아직 확인하지 못했습니다. TestFlight 초대 링크나 서명된 iOS 설치 파일은 없습니다.
+설치하려면 **HTTPS 공개 주소로 먼저 배포**해야 합니다. `npm run export:preview`로 생성한 `dist-preview/` 전체가 정적 호스팅의 웹 루트에 있어야 합니다. `npm run export:preview`는 도메인 루트용이고 `npm run export:pages`는 GitHub Pages `/onjeom/` 경로용입니다. `app.config.ts`가 Expo의 baseUrl을 호스팅 경로에 맞게 설정하며 아이콘·설치 스크립트·오프라인 셸도 같은 경로를 사용합니다. 배포 파일은 `gh-pages` 브랜치에 업로드했고 2026-11-04 Pages 활성화와 실제 사이트의 필수 파일 응답을 확인했습니다. TestFlight 초대 링크나 서명된 iOS 설치 파일은 없습니다.
 
 배포 주소가 생기면 아이폰 **Safari로 열기 → 공유 → 홈 화면에 추가 → 추가** 순서로 설치합니다. Apple Developer 계정 없이 사용할 수 있는 웹앱 방식입니다. TestFlight/App Store의 네이티브 앱을 원하면 Apple Developer 서명과 별도 배포가 필요합니다.
 
@@ -108,7 +112,7 @@ npm run publish:pages        # Pages용 빌드 후 origin의 gh-pages 브랜치�
 
 `.github/workflows/configure-pages.yml`은 GitHub에서 Pages를 `gh-pages / (root)`로 설정하고 빌드·실제 HTML·설치 매니페스트까지 확인합니다. 결과는 `.github/pages-status.json`에 기록합니다. 기존 사이트가 없으면 생성도 시도하되 GitHub가 허용한 권한 안에서만 수행합니다.
 
-실행 41661230637은 Pages 생성 단계에서 GitHub의 **403 Resource not accessible by integration**으로 실패했습니다. 따라서 자동 활성화와 공개 사이트 접속 검증은 완료되지 않았습니다. 로컬 네트워크 차단과 별개로 GitHub 자동화 인증에 사이트 생성 권한이 부족하다는 서버 응답을 확인했습니다.
+실행 41661230637은 Pages 생성 단계에서 GitHub의 **403 Resource not accessible by integration**으로 실패했습니다. 이 기록은 초기 자동 생성 시도에 대한 실패이며, 이후 사용자가 설정한 Pages는 2026-11-04 실제 접속 검증을 통과했습니다. 로컬 네트워크 차단과 별개로 GitHub 자동화 인증에 사이트 생성 권한이 부족하다는 서버 응답을 확인했습니다.
 
 자동 설정을 계속하려면 저장소의 Actions secret `PAGES_TOKEN`에 해당 저장소만 접근하는 GitHub 인증을 안전하게 등록할 수 있습니다. fine-grained PAT의 경우 Pages 읽기/쓰기와 검증에 필요한 Contents 읽기 권한이 필요합니다. GitHub App 인증은 Pages/Administration 관리 권한이 필요합니다. 실제 토큰 값은 채팅·코드·Git 기록에 넣지 않습니다. 인증이 준비되면 워크플로우를 다시 실행해 설정과 실제 주소를 검증해야 합니다. GitHub의 기본 워크플로우 토큰만으로 사이트 생성 권한을 임의로 늘릴 수는 없습니다.
 

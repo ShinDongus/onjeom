@@ -25,3 +25,5 @@ GitHub Pages /onjeom/ 경로 지원은 app.config.ts, export:pages, test:pages�
 웹앱 정적 파일은 origin/gh-pages 0243779b8cad3d785f8a84c0ec53c7a9c92f09c6에 업로드했고 원격 ref를 확인했습니다. 앱 소스도 origin/feat/expo-onjeom에 있습니다. 라이브 Pages 활성화/응답 확인은 아직 안 됐습니다. 다음 사용자에게 토큰을 채팅으로 요청하거나 이미 설치 링크가 활성화됐다고 말하지 말고, 소유자가 GitHub Pages에서 gh-pages / (root)를 선택했는지 확인하세요. API·사이트 네트워크 도메인은 초안에만 저장됐으므로 적용 여부를 따로 점검하세요.
 
 GitHub 내부 설정 자동화도 실행했습니다. `.github/workflows/configure-pages.yml`과 `.github/pages-status.json`을 확인하세요. 실행 41661230637은 create_settings에서 403 Resource not accessible by integration으로 거부됐습니다. 이는 실제 GitHub 자동화 인증의 사이트 생성 권한 부족입니다. 전체 접근 모드가 GitHub 관리자 권한을 주지는 않습니다. PAGES_TOKEN 등 적절한 인증이 준비되기 전에는 같은 작업을 반복하거나 설정이 끝났다고 주장하지 마세요. 토큰을 채팅에 요청하거나 로그에 출력하지 마세요. 관리 인증이 준비되면 워크플로우를 재실행해 실제 사이트와 설치 메타데이터를 확인하세요.
+
+최신 상태(2026-11-04): 사용자가 Pages 설정을 완료했고 실제 공개 사이트 검증이 통과했습니다. `.github/pages-live-status.json`의 verified:true, phase:ready 및 실행 41756901625를 보세요. 사이트 https://shindongus.github.io/onjeom/ 는 gh-pages / 배포 커밋 0243779에서 HTML/JS/설치파일 HTTP200을 확인했습니다. 이전 pages-status.json의 생성권한 403은 과거 기록입니다. 현재 상태를 그 실패만으로 판단하거나 사용자에게 Pages 활성화를 다시 요구하지 마세요. 실물 아이폰 설치는 별도 검증 대상입니다.
