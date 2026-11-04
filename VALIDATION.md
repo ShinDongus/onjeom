@@ -68,3 +68,5 @@ GitHub Actions 실행 https://github.com/ShinDongus/onjeom/actions/runs/41661230
 추가 검증은 320×640에서 생각 입력·완료 주 버튼이 탭 위에 노출되는지, 시트의 하단 고정 위치, 닫았다 다시 열었을 때 초안 유지, 홈에서 이어 하기, 실제 작은 단계 분할과 전환을 검사한다. 기존 9+3송이 페이지·빈자리·가로 스크롤·복원/손상 보호·광고 취소·오프라인 기록 유지도 통과했다. 스크린샷 mobile-today.png, mobile-today-active.png, mobile-focus.png, mobile-garden.png, mobile-garden-page2.png, mobile-bloom.png를 직접 검토했다.
 
 npm run check, npm run format:check, iOS/Android Hermes 번들 생성 통과. 실제 iPhone/Safari 설치·터치·키보드·큰 글꼴·스크린리더, 네이티브 런타임/SQLite 실행은 이번에 수행하지 않았다. 원본 기반 별도 PWA의 Chromium 4개 테스트는 이번 UI 변경 범위 밖으로 재실행하지 않았으며 원본 무결성과 도메인은 31개 테스트에 포함했다. 공식 앱 화면 직접 조사도 미완료다.
+
+온실 UI 공개 배포 확인: 소스 03e09c9, 배포 6363c63f81e578adc753ace42ca649f3344e1408. GitHub 실행 https://github.com/ShinDongus/onjeom/actions/runs/41767070214 에서 해당 배포의 built 상태와 공개 HTML의 정확한 일치를 검증했다. 새 web index-16d456e08b9c65eaaa8a80f3866f04f8.js, 설치 스크립트·아이콘·매니페스트·서비스 워커 모두 HTTP200. 검증 트리거 소스 004376db6c266288698cd4aa44db463ae0becc4a와 보고서 sourceSha, expectedCommit과 배포 SHA가 일치하고 verified=true, phase=ready임을 확인했다. 결과 커밋 7bd109ed16fa6e3a2966aed1a38b1bb18483e032를 수신했다. 공개 주소의 HTTP 검증이며 실사이트 전체 브라우저 기능/실물 iPhone 검증과 구분한다.
