@@ -1,4 +1,5 @@
 name: Verify live Onjeom site
+# Spatial greenhouse release 03e09c9; verify the exact published HTML and assets.
 on:
   push:
     branches: [feat/expo-onjeom]
