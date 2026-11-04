@@ -4,6 +4,10 @@ on:
     branches: [feat/expo-onjeom]
     paths:
       - .github/workflows/deploy-onjeom.yml
+      - App.tsx
+      - src/**
+      - package.json
+      - package-lock.json
   workflow_dispatch:
 permissions:
   contents: write
