@@ -39,3 +39,7 @@ test("Groq client rejects hallucinated citations and explains backend failures",
     fetchImpl: async () => ({ ok: false, async json() { return {error:"서버 준비 전입니다."}; } })
   }), /준비 전/);
 });
+
+test("client rejects accidental secret Groq API key submission", async () => {
+  await assert.rejects(groqSeparate("빨래하기", { endpoint, accessToken: "gsk_" + "x".repeat(30) }), /Groq API 키/);
+});
