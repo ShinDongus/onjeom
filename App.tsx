@@ -15,6 +15,7 @@ import {
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import FlowerPortrait from "./src/components/FlowerPortrait";
+import BloomMoment from "./src/components/BloomMoment";
 import DiaryHome from "./src/components/DiaryHome";
 import DiaryHistory from "./src/components/DiaryHistory";
 import { saveJournal } from "./src/journal.mjs";
@@ -943,9 +944,10 @@ function Onjeom() {
             <Text style={[s.eyebrow, { textAlign: "center", fontSize: 12 }]}>
               당신의 작은 행동 끝에
             </Text>
-            <FlowerPortrait
+            <BloomMoment
               species={bloom.speciesId}
               color={flowerInfo(bloom).color.hex}
+              reduceMotion={state.settings.reduceMotion || systemReduce}
             />
             <Text
               accessibilityRole="header"
