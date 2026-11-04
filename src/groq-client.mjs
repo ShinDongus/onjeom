@@ -17,6 +17,8 @@ export async function groqSeparate(text, {
     (url.protocol !== "https:" && !["localhost", "127.0.0.1"].includes(url.hostname)) ||
     url.username || url.password || url.hash || url.search || url.pathname !== "/api/organize"
   ) throw Error("본인의 HTTPS 백엔드 /api/organize 주소를 입력해 주세요.");
+  if (typeof accessToken === "string" && accessToken.startsWith("gsk_"))
+    throw Error("Groq API 키를 앱에 입력하지 마세요. 서버 전용 키입니다.");
   if (typeof accessToken !== "string" || accessToken.length < 24)
     throw Error("서버에서 설정한 온점. 접근 코드를 입력해 주세요. Groq API 키가 아닙니다.");
   const response = await fetchImpl(url.href, {
