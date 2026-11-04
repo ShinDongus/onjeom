@@ -10,7 +10,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
       - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
@@ -23,9 +23,19 @@ jobs:
             try {
               const site = (await github.request('GET /repos/{owner}/{repo}/pages', { owner, repo })).data;
               result.settings = { status: site.status, source: site.source, buildType: site.build_type, htmlUrl: site.html_url };
-              const build = (await github.request('GET /repos/{owner}/{repo}/pages/builds/latest', { owner, repo })).data;
+              const expected = (await github.request('GET /repos/{owner}/{repo}/git/ref/{ref}', { owner, repo, ref: 'heads/gh-pages' })).data.object.sha;
+              result.expectedCommit = expected;
+              let build;
+              for (let attempt = 0; attempt < 24; attempt++) {
+                build = (await github.request('GET /repos/{owner}/{repo}/pages/builds/latest', { owner, repo })).data;
+                if (build.commit === expected && build.status === 'errored') throw Error('Latest Pages build failed');
+                if (build.commit === expected && build.status === 'built') break;
+                await new Promise(resolve => setTimeout(resolve, 10000));
+              }
               result.build = { status: build.status, commit: build.commit };
-              if (build.status !== 'built') throw Error('Pages build is not complete');
+              if (build.status !== 'built' || build.commit !== expected) throw Error('Latest Pages build is not complete');
+              const file = (await github.request('GET /repos/{owner}/{repo}/contents/{path}', { owner, repo, path: 'index.html', ref: expected })).data;
+              const expectedHtml = Buffer.from(file.content, 'base64').toString('utf8');
               async function get(path) {
                 const target = new URL(path, url);
                 if (target.origin !== new URL(url).origin || !target.pathname.startsWith('/onjeom/')) throw Error('Unexpected asset URL');
@@ -34,7 +44,13 @@ jobs:
                 if (!response.ok) throw Error('Public app asset failed');
                 return response;
               }
-              const html = await (await get('./')).text();
+              let html;
+              for (let attempt = 0; attempt < 20; attempt++) {
+                try { html = await (await get('./')).text(); } catch { html = undefined; }
+                if (html === expectedHtml) break;
+                await new Promise(resolve => setTimeout(resolve, 5000));
+              }
+              if (html !== expectedHtml) throw Error('Live site does not yet match the latest deployment');
               if (!html.includes('/onjeom/_expo/') || !html.includes('manifest.webmanifest')) throw Error('Unexpected app HTML');
               const manifest = await (await get('manifest.webmanifest')).json();
               if (manifest.display !== 'standalone' || manifest.name !== '온점.') throw Error('Install manifest is invalid');
