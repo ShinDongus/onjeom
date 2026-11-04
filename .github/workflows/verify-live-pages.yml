@@ -1,5 +1,5 @@
 name: Verify live Onjeom site
-# Verify Groq opt-in UI and matching published GitHub Pages artifact after release.
+# Verify diary redesign ae095a5, preserved opt-in Groq and comparison captures.
 on:
   push:
     branches: [feat/expo-onjeom]
@@ -58,6 +58,12 @@ jobs:
               await get('apple-touch-icon.png');
               await get('sw.js');
               for (const match of html.matchAll(/<script[^>]+src=["']([^"']+)["']/g)) await get(match[1]);
+              const review = await (await get('review/')).text();
+              if (!review.includes('온점. 하루를 펼치는 다이어리')) throw Error('UI comparison page is invalid');
+              for (const file of ['01-today.png', '02-writing.png', '03-review.png', '04-one-step.png', '05-garden.png', '06-catalog.png', '07-calendar.png', '08-record-page.png', '09-record-note.png']) {
+                const screenshot = await get('review/screenshots/' + file);
+                if (!screenshot.headers.get('content-type')?.startsWith('image/png')) throw Error('UI screenshot MIME type is invalid');
+              }
               result.verified = true;
               result.phase = 'ready';
               core.info(`Verified live app: ${url}`);
