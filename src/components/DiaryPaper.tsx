@@ -8,6 +8,9 @@ export default function DiaryPaper({day,entry,onSave,readOnly=false}:{
  const [draft,setDraft]=useState(entry?.text||"");
  const [mood,setMood]=useState<string|null>(entry?.mood||null);
  const edited=useRef(false);
+ const latest=useRef({day,text:draft,mood,onSave});
+ latest.current={day,text:draft,mood,onSave};
+ useEffect(()=>()=>{if(edited.current){const x=latest.current;x.onSave(x.day,x.text,x.mood);edited.current=false;}},[]);
  useEffect(()=>{setDraft(entry?.text||"");setMood(entry?.mood||null);edited.current=false;},[day]);
  useEffect(()=>{
   if(!edited.current || (draft===(entry?.text||"") && mood===(entry?.mood||null)))return;
