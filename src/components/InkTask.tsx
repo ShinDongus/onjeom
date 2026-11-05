@@ -102,7 +102,7 @@ export default function InkTask({
   );
 }
 const s = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "center", minHeight: 44 },
+  row: { flexDirection: "row-reverse", alignItems: "center", minHeight: 44 },
   touch: {
     width: 44,
     minHeight: 44,

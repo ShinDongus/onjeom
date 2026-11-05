@@ -91,6 +91,15 @@ test("첨부 명세: 홈 완료 원·조용한 4회 개화·선택한 뒤에만 
   await button(page, "생각 정리하기").click();
   await button(page, "오늘의 작은 일로 확정하기").click();
   await button(page, "오늘로 돌아가기").click();
+  const taskLabel = await button(
+    page,
+    "컵 씻기 한 걸음 시작하기",
+  ).boundingBox();
+  const completeCircle = await button(page, "컵 씻기 완료하기").boundingBox();
+  expect(completeCircle.x).toBeGreaterThanOrEqual(
+    taskLabel.x + taskLabel.width,
+  );
+  expect(completeCircle.width).toBe(44);
   for (const task of ["컵 씻기", "물 마시기", "창문 열기", "책 읽기"]) {
     await button(page, `${task} 완료하기`).click();
     await expect(
