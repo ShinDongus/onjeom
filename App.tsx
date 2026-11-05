@@ -701,9 +701,12 @@ function Onjeom() {
                     <InstallHint />
                     <View style={s.card}>
                       <View style={s.row}>
-                        <Text style={[s.body, { flex: 1 }]}>모션 줄이기</Text>
+                        <Text style={[s.body, { flex: 1 }]}>모션 감소</Text>
                         <Switch
-                          accessibilityLabel="모션 줄이기"
+                          accessibilityLabel="모션 감소"
+                          trackColor={{ false: line, true: sage }}
+                          thumbColor={paper}
+                          ios_backgroundColor={sand}
                           value={state.settings.reduceMotion}
                           disabled={busy}
                           onValueChange={(v) =>
@@ -729,6 +732,9 @@ function Onjeom() {
                         <Text style={[s.body, { flex: 1 }]}>PLUS 테스트</Text>
                         <Switch
                           accessibilityLabel="PLUS 테스트 모드"
+                          trackColor={{ false: line, true: sage }}
+                          thumbColor={paper}
+                          ios_backgroundColor={sand}
                           value={state.premiumDemo}
                           disabled={busy}
                           onValueChange={(v) =>

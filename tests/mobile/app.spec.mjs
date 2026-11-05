@@ -97,9 +97,9 @@ test("React Native UI: 검토·완료·개화·취소 보관·등록·재실행�
   await expect(page.getByRole("heading", { name: "씨앗" })).toBeVisible();
   await page.getByRole("tab", { name: "오늘", exact: true }).click();
   await button(page, "설정 열기").click();
-  await page.getByRole("switch", { name: "모션 줄이기", exact: true }).click();
+  await page.getByRole("switch", { name: "모션 감소", exact: true }).click();
   await expect(
-    page.getByRole("switch", { name: "모션 줄이기", exact: true }),
+    page.getByRole("switch", { name: "모션 감소", exact: true }),
   ).toBeChecked();
   const download = page.waitForEvent("download");
   await button(page, "백업 파일 내보내기").click();
