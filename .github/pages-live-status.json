@@ -1,6 +1,6 @@
 {
-  "sourceSha": "a43159199e35bcd6a3ff81285681f886832f4580",
-  "runUrl": "https://github.com/ShinDongus/onjeom/actions/runs/41974656396",
+  "sourceSha": "45cbbec9b72fd36290f9d85732eaeafbfc3718a0",
+  "runUrl": "https://github.com/ShinDongus/onjeom/actions/runs/41975027575",
   "siteUrl": "https://shindongus.github.io/onjeom/",
   "verified": true,
   "checks": [
@@ -25,7 +25,7 @@
       "type": "application/javascript; charset=utf-8"
     },
     {
-      "path": "/onjeom/_expo/static/js/web/index-68261bc23310867c64077a2a0029cb15.js",
+      "path": "/onjeom/_expo/static/js/web/index-0ab0120e09691936775d0286782e8892.js",
       "status": 200,
       "type": "application/javascript; charset=utf-8"
     },
@@ -126,7 +126,7 @@
     }
   ],
   "settings": {
-    "status": "building",
+    "status": "built",
     "source": {
       "branch": "gh-pages",
       "path": "/"
@@ -134,10 +134,10 @@
     "buildType": "legacy",
     "htmlUrl": "https://shindongus.github.io/onjeom/"
   },
-  "expectedCommit": "3cbd956e6b6256d376bd7d9d1c111019ed0013ae",
+  "expectedCommit": "fa4b24b09bd1d56fe2633bc45b595f307086c09d",
   "build": {
     "status": "built",
-    "commit": "3cbd956e6b6256d376bd7d9d1c111019ed0013ae"
+    "commit": "fa4b24b09bd1d56fe2633bc45b595f307086c09d"
   },
   "verifiedFonts": 6,
   "phase": "ready"
