@@ -60,7 +60,7 @@ jobs:
               for (const match of html.matchAll(/<script[^>]+src=["']([^"']+)["']/g)) await get(match[1]);
               const crypto = require('node:crypto');
               const fontSources = JSON.parse(fs.readFileSync('assets/fonts/sources.json', 'utf8')).filter(file => /\.(ttf|otf)$/.test(file.file));
-              const deployedFonts = (await github.request('GET /repos/{owner}/{repo}/contents/{path}', { owner, repo, path: 'assets/fonts', ref: expected })).data;
+              const deployedFonts = (await github.request('GET /repos/{owner}/{repo}/contents/{path}', { owner, repo, path: 'assets/assets/fonts', ref: expected })).data;
               if (fontSources.length !== 6) throw Error('Expected six bundled font files');
               for (const font of fontSources) {
                 const [name, extension] = font.file.split('.');
