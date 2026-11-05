@@ -1,8 +1,8 @@
 {
-  "sourceSha": "ea54cb18af72877f974ef1bcdb35aa70dbf041d4",
-  "runUrl": "https://github.com/ShinDongus/onjeom/actions/runs/41974310435",
+  "sourceSha": "fa577847fd4ef9be7582e93724ef1412f7e05705",
+  "runUrl": "https://github.com/ShinDongus/onjeom/actions/runs/41974368935",
   "siteUrl": "https://shindongus.github.io/onjeom/",
-  "verified": false,
+  "verified": true,
   "checks": [
     {
       "path": "/onjeom/",
@@ -33,6 +33,96 @@
       "path": "/onjeom/install.js",
       "status": 200,
       "type": "application/javascript; charset=utf-8"
+    },
+    {
+      "path": "/onjeom/assets/assets/fonts/Pretendard-Regular.84c0ea9d65324c758c8bd9686207afea.otf",
+      "status": 200,
+      "type": "font/otf"
+    },
+    {
+      "path": "/onjeom/assets/assets/fonts/Pretendard-Medium.13a352bd44156de92cce335ce93cd02d.otf",
+      "status": 200,
+      "type": "font/otf"
+    },
+    {
+      "path": "/onjeom/assets/assets/fonts/Pretendard-SemiBold.6fe301765c4f438e2034a0a47b609c61.otf",
+      "status": 200,
+      "type": "font/otf"
+    },
+    {
+      "path": "/onjeom/assets/assets/fonts/NotoSerifKR-Regular.e60f328f6d78dfc5faecc90bb886bc03.ttf",
+      "status": 200,
+      "type": "font/ttf"
+    },
+    {
+      "path": "/onjeom/assets/assets/fonts/NotoSerifKR-Medium.2ef4b7ae5c898241b9e6d85e1cf73fff.ttf",
+      "status": 200,
+      "type": "font/ttf"
+    },
+    {
+      "path": "/onjeom/assets/assets/fonts/NotoSerifKR-SemiBold.7474633f738c2a8768877b766fba582c.ttf",
+      "status": 200,
+      "type": "font/ttf"
+    },
+    {
+      "path": "/onjeom/review/",
+      "status": 200,
+      "type": "text/html; charset=utf-8"
+    },
+    {
+      "path": "/onjeom/review/screenshots/00-cover.png",
+      "status": 200,
+      "type": "image/png"
+    },
+    {
+      "path": "/onjeom/review/screenshots/01-today.png",
+      "status": 200,
+      "type": "image/png"
+    },
+    {
+      "path": "/onjeom/review/screenshots/02-writing.png",
+      "status": 200,
+      "type": "image/png"
+    },
+    {
+      "path": "/onjeom/review/screenshots/03-review.png",
+      "status": 200,
+      "type": "image/png"
+    },
+    {
+      "path": "/onjeom/review/screenshots/04-one-step.png",
+      "status": 200,
+      "type": "image/png"
+    },
+    {
+      "path": "/onjeom/review/screenshots/05-garden.png",
+      "status": 200,
+      "type": "image/png"
+    },
+    {
+      "path": "/onjeom/review/screenshots/06-catalog.png",
+      "status": 200,
+      "type": "image/png"
+    },
+    {
+      "path": "/onjeom/review/screenshots/07-calendar.png",
+      "status": 200,
+      "type": "image/png"
+    },
+    {
+      "path": "/onjeom/review/screenshots/08-record-page.png",
+      "status": 200,
+      "type": "image/png"
+    },
+    {
+      "path": "/onjeom/review/screenshots/09-record-note.png",
+      "status": 200,
+      "type": "image/png"
+    },
+    {
+      "path": "/onjeom/review/screenshots/pre-spec-today.png",
+      "status": 200,
+      "type": "image/png"
     }
   ],
   "settings": {
@@ -49,7 +139,6 @@
     "status": "built",
     "commit": "d658837feb243a53b1b317d54b81e9c45c777522"
   },
-  "phase": "failed",
-  "apiStatus": 404,
-  "reason": "GitHub Pages API returned HTTP 404"
+  "verifiedFonts": 6,
+  "phase": "ready"
 }
