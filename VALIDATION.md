@@ -116,3 +116,5 @@ npm run check, npm run format:check, iOS/Android Hermes 번들 생성 통과. �
 최종 명세 대조에서 완료 원이 왼쪽에 남은 것을 발견해 오른쪽으로 수정했고 실제 좌표와 44px 터치 크기 검사를 추가했다. 해당 수정 후 모바일 12개와 도메인 54개를 다시 실행해 통과했다. 공개 폰트 검증의 첫 실행은 Expo 출력의 중첩 assets/assets/fonts 경로를 assets/fonts로 조회해 HTTP404로 실패했으며 실제 배포 경로로 바로잡은 재실행에서 원본 SHA-256 6개를 모두 확인했다.
 
 설정 토글에도 시스템 기본 색상 대신 명세의 세이지/종이/구분선/샌드를 적용하고 명세 표기인 ‘모션 감소’로 통일했다. 팔레트 변경 후 전체 모바일 12개를 통과했고, 표기 통일 후 해당 토글·완료·복원 시나리오를 추가 재검증했다. 도메인 54개·TypeScript·Prettier와 iOS/Android 번들 생성도 다시 통과했다.
+
+사용자 명세 UI 최종 공개 배포 확인: 소스 `167b1df`, 정적 배포 `fa4b24b09bd1d56fe2633bc45b595f307086c09d`, 검증 트리거 `45cbbec9b72fd36290f9d85732eaeafbfc3718a0`. [GitHub 실행](https://github.com/ShinDongus/onjeom/actions/runs/41975027575)에서 최신 built 커밋과 공개 HTML의 바이트 일치, 앱/설치 자산/폰트6개/표지 및 비교 캡처 등 공개 응답 24건의 HTTP200을 확인했다. 폰트6개는 공개 응답의 SHA-256이 번들 원본과 일치한다. web bundle은 `index-0ab0120e09691936775d0286782e8892.js`다. 결과 커밋 `c31fcd57569abe93c55bb5fe0fa12196c9d94594`, verified=true, phase=ready를 수신했다. 실제 사이트의 HTTP/원본 일치 확인이며 실사이트 브라우저 전체 기능이나 실물 아이폰 설치 검증을 뜻하지 않는다. 기존 초기403/404 기록과 구분한다.

@@ -45,3 +45,5 @@ GitHub 내부 설정 자동화도 실행했습니다. `.github/workflows/configu
 OnboardingCover는 설치당 최초 표지이며 기존 DB metadata/웹 IDB의 intro-seen 키에 기록합니다. 사용자 데이터 삭제·백업 복원과 별도입니다. Home은 날짜/직접 줄노트/작업 우측 직접 완료 원/하단 식물입니다. ReviewList는 실제 드래그 정렬과 인라인 수정, Sheet.footer는 고정 확정입니다. Focus의 작은 단계는 2~3개 인라인 입력입니다. 네 번째 완료 시 PlantMoment에 꽃이 피어나며 자동 시트를 열지 않습니다. 사용자가 꽃말 버튼을 눌러야 상세가 열립니다. RecordsScreen은 월 달력을 유지하고 아래에 과거 페이지를 펼치며 원문 편집은 ID·날짜·작업·꽃을 유지합니다. Seed는 날짜순과 복원/비우기입니다. 기존 journals·선택형 Groq·원본 도메인·DB 버전3을 보존했습니다.
 
 지정 HEX의 보조 글자/버튼 대비가 일반 글자 AA에 미달합니다. HEX 우선 유지 vs 최소 보정 질문에 답변을 받지 못했으므로 임의 보정하지 않았으며 AA 전체 준수라고 쓰지 마세요. 클라우드 제공자도 답변이 없어 기존 파일 백업/공유/복원을 유지하고 자동 서버를 만들지 않았습니다. 실제 실기기 키보드/햅틱/큰 글꼴/스크린리더/SQLite 런타임은 미실행입니다. 테스트 최종 결과는 VALIDATION.md 최신 항목을 보세요. 캡처는 00-cover와01~09이며 pre-spec-today는 이번 명세 적용 직전 화면입니다.
+
+최신 명세 UI는 소스167b1df에서 gh-pages `fa4b24b09bd1d56fe2633bc45b595f307086c09d`로 배포됐습니다. 공개 검증은 https://github.com/ShinDongus/onjeom/actions/runs/41975027575 에서 verified:true/phase:ready 및 폰트6개 SHA-256 일치까지 통과했습니다. 소스 검증 트리거는 `45cbbec9b72fd36290f9d85732eaeafbfc3718a0`입니다. 과거 pages-status의403이나 최초 폰트 조회404를 현재 실패로 오해하지 마세요. 설정 토글도 지정 팔레트이며 표기는 ‘모션 감소’, 홈 완료 원은 우측입니다.

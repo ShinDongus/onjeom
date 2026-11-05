@@ -2,7 +2,7 @@
 
 현재 웹앱 주소: **https://shindongus.github.io/onjeom/**
 
-최신 UI는 사용자 첨부 [디자인 명세](docs/design/onjeom_ui_ux_design_system.md)의 종이 색상·Pretendard/Noto Serif KR·여백·버튼 수치를 적용한 **오늘 / 정원 / 도감 / 기록** 다이어리입니다. 첫 실행 표지, 직접 생각 입력, 드래그 검토, 한 걸음의 인라인 분할, 조용한 개화, 3×3 정원과 한 종씩 도감을 구현했습니다. 달력은 그대로 둔 채 아래에서 지난 생각 원문과 회고를 편집합니다. [화면 비교](https://shindongus.github.io/onjeom/review/)와 [구현 대조표·명세 충돌/미검증 항목](docs/design/IMPLEMENTATION_AUDIT.md)을 참고하세요. 최신 공개 배포 상태는 `.github/pages-live-status.json`에서 확인합니다.
+최신 UI는 사용자 첨부 [디자인 명세](docs/design/onjeom_ui_ux_design_system.md)의 종이 색상·Pretendard/Noto Serif KR·여백·버튼 수치를 적용한 **오늘 / 정원 / 도감 / 기록** 다이어리입니다. 첫 실행 표지, 직접 생각 입력, 드래그 검토, 한 걸음의 인라인 분할, 조용한 개화, 3×3 정원과 한 종씩 도감을 구현했습니다. 달력은 그대로 둔 채 아래에서 지난 생각 원문과 회고를 편집합니다. [화면 비교](https://shindongus.github.io/onjeom/review/)와 [구현 대조표·명세 충돌/미검증 항목](docs/design/IMPLEMENTATION_AUDIT.md)을 참고하세요. 최신 공개 배포 상태는 `.github/pages-live-status.json`에서 확인합니다. 2026-11-05 최종 명세 적용본의 공개 HTTP 응답과 내장 폰트 6개의 SHA-256 일치를 확인했습니다.
 
 지정 폰트는 각 400/500/600의 6개 파일(약 44.8 MiB)을 번들·오프라인 캐시에 내장합니다. `expo-font`와 네이티브 버튼 피드백용 `expo-haptics`를 사용합니다. 지정 HEX와 일반 글자 AA 대비 조건에 충돌이 있어 색상을 임의로 바꾸지 않았습니다. 자동 클라우드 서버는 연결하지 않았으며 기존 파일 백업·공유·복원은 유지합니다.
 
