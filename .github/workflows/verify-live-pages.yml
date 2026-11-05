@@ -1,5 +1,5 @@
 name: Verify live Onjeom site
-# Verify supplied design 05482b2, all six bundled fonts and comparison captures.
+# Verify supplied design 167b1df, all six bundled fonts and comparison captures.
 on:
   push:
     branches: [feat/expo-onjeom]
