@@ -1,0 +1,58 @@
+[
+  {
+    "file": "Pretendard-Regular.otf",
+    "source": "package/dist/public/static/Pretendard-Regular.otf",
+    "package": "pretendard-1.3.9.tgz",
+    "bytes": 1574352,
+    "sha256": "3ffbacde6ab8411f1d2db54bb9b1f0b3ee2a738932033722cf0388c06aed1c93"
+  },
+  {
+    "file": "Pretendard-Medium.otf",
+    "source": "package/dist/public/static/Pretendard-Medium.otf",
+    "package": "pretendard-1.3.9.tgz",
+    "bytes": 1584068,
+    "sha256": "d39e50e4bb52b4993b6a4eeb821a171254745bd824446af01e1f616b89fface0"
+  },
+  {
+    "file": "Pretendard-SemiBold.otf",
+    "source": "package/dist/public/static/Pretendard-SemiBold.otf",
+    "package": "pretendard-1.3.9.tgz",
+    "bytes": 1583704,
+    "sha256": "c89bc43027dc7cde5726e96223376f8eec09302b2fc1f8147fd5b57cfc376118"
+  },
+  {
+    "file": "Pretendard-OFL.txt",
+    "source": "package/dist/LICENSE.txt",
+    "package": "pretendard-1.3.9.tgz",
+    "bytes": 4419,
+    "sha256": "b04538c9abec39a3db75108cf0af0fd9c77032fe8aa2cf38345b4d250e98e38e"
+  },
+  {
+    "file": "NotoSerifKR-Regular.ttf",
+    "source": "package/400Regular/NotoSerifKR_400Regular.ttf",
+    "package": "expo-google-fonts-noto-serif-kr-0.4.4.tgz",
+    "bytes": 14083460,
+    "sha256": "7faaee1ddc31789b1a688cb514d038febecb2f6ebeda6f6137ed77bbb8b36eb0"
+  },
+  {
+    "file": "NotoSerifKR-Medium.ttf",
+    "source": "package/500Medium/NotoSerifKR_500Medium.ttf",
+    "package": "expo-google-fonts-noto-serif-kr-0.4.4.tgz",
+    "bytes": 14092616,
+    "sha256": "5646264ff460ea20cddfacc205a55faae42c452a9d0d09a054e781c0d2887a0f"
+  },
+  {
+    "file": "NotoSerifKR-SemiBold.ttf",
+    "source": "package/600SemiBold/NotoSerifKR_600SemiBold.ttf",
+    "package": "expo-google-fonts-noto-serif-kr-0.4.4.tgz",
+    "bytes": 14091856,
+    "sha256": "c90355bc25788bb5f00d774b9f6f073b18c88964f8932f1357296799f003d77c"
+  },
+  {
+    "file": "NotoSerifKR-OFL.txt",
+    "source": "package/LICENSE_FONT",
+    "package": "expo-google-fonts-noto-serif-kr-0.4.4.tgz",
+    "bytes": 4350,
+    "sha256": "5e0da210fb04058a8c0087985d2d456b931c2579811a49655721d3cf0c36b6d6"
+  }
+]

@@ -6,6 +6,7 @@ on:
       - .github/workflows/deploy-onjeom.yml
       - App.tsx
       - src/**
+      - assets/**
       - package.json
       - package-lock.json
   workflow_dispatch:

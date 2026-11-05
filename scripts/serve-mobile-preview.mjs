@@ -13,6 +13,7 @@ const types = {
   ".png": "image/png",
   ".woff": "font/woff",
   ".ttf": "font/ttf",
+  ".otf": "font/otf",
 };
 http
   .createServer(async (req, res) => {

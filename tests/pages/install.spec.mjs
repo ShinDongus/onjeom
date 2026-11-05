@@ -1,3 +1,4 @@
+import { openDiary } from "../helpers/open-diary.mjs";
 import { test, expect } from "@playwright/test";
 test("Pages 하위 경로에서 설치 자산과 오프라인 기록 보존", async ({
   page,
@@ -5,7 +6,7 @@ test("Pages 하위 경로에서 설치 자산과 오프라인 기록 보존", as
 }) => {
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("./");
+  await openDiary(page, "./");
   await expect(
     page.getByRole("button", { name: "생각 정리하기", exact: true }),
   ).toBeVisible();
@@ -17,8 +18,14 @@ test("Pages 하위 경로에서 설치 자산과 오프라인 기록 보존", as
   );
   expect(screenshot.status()).toBe(200);
   expect(screenshot.headers()["content-type"]).toBe("image/png");
+  expect(
+    (
+      await page.request.get("/onjeom/review/screenshots/00-cover.png")
+    ).status(),
+  ).toBe(200);
   const workerText = await (await page.request.get("/onjeom/sw.js")).text();
   expect(workerText).not.toContain("./review/");
+  expect((workerText.match(/\.(?:ttf|otf)/g) || []).length).toBe(6);
   const bundles = await page
     .locator("script[src]")
     .evaluateAll((elements) => elements.map((el) => new URL(el.src).pathname));
@@ -44,13 +51,18 @@ test("Pages 하위 경로에서 설치 자산과 오프라인 기록 보존", as
     .getByRole("button", { name: "생각 정리하기", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "한 걸음 모드 시작", exact: true })
+    .getByRole("button", { name: "오늘의 작은 일로 확정하기", exact: true })
     .click();
   await context.setOffline(true);
   await page.reload();
-  await page
-    .getByRole("button", { name: "한 걸음 시작하기", exact: true })
-    .click();
+  const offlineFonts = await page.evaluate(async () => {
+    const faces = [...document.fonts];
+    await Promise.all(faces.map((face) => face.load()));
+    return faces.map((face) => ({ family: face.family, status: face.status }));
+  });
+  expect(offlineFonts).toHaveLength(6);
+  expect(offlineFonts.every((face) => face.status === "loaded")).toBe(true);
+  await page.getByRole("button", { name: / 한 걸음 시작하기$/ }).click();
   await expect(
     page.getByRole("heading", { name: "아이폰에서 첫 한 걸음" }),
   ).toBeVisible();
@@ -60,7 +72,7 @@ test("Pages 하위 경로에서 설치 자산과 오프라인 기록 보존", as
   ).toBeVisible();
   await page.reload();
   await expect(
-    page.getByRole("button", { name: "한 걸음 시작하기", exact: true }),
+    page.getByRole("button", { name: / 한 걸음 시작하기$/ }),
   ).toHaveCount(0);
   await expect(
     page.getByRole("checkbox", { name: "아이폰에서 첫 한 걸음", exact: true }),

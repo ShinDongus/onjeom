@@ -37,3 +37,11 @@ GitHub 내부 설정 자동화도 실행했습니다. `.github/workflows/configu
 현재 UI는 감성 다이어리 개편입니다. 첫 화면은 HomeScreen의 직접 입력이며 하단 탭은 오늘/정원/도감/기록입니다. 실행·씨앗·설정은 탭이 아닌 보조 화면입니다. PaperTexture/diary-theme이 종이 디자인을, CatalogScreen이 한 종씩 넘기는 도감을, RecordsScreen이 월 달력과 날짜별 페이지를 담당합니다. src/diary.mjs의 선택형 diary 필드(draft,note,updatedAt)는 v3 상태에 추가되며 validateDiary가 마이그레이션/백업을 검증합니다. 기존 tasks/thoughts/flowers·DB 버전·원본은 유지합니다. 생각/짧은 기록은 저장 버튼 또는 정리 버튼으로 확정하며 저장 완료 뒤 재실행해야 합니다. 노트 편집 버퍼는 탭 전환 중에는 유지되지만 앱 종료까지 보장하지 않습니다. UI 테스트는 9개이고 캡처는 docs/screenshots, 비교는 docs/ui-review.html입니다. Pages 빌드의 /review/는 별도 정적 문서로 앱 사전 캐시에서 제외됩니다. 실물 키보드 QA로 뷰포트 시뮬레이션을 과장하지 마세요.
 
 원격 동시 변경(7ae4173까지)을 병합했습니다. journals(text,mood,updatedAt)와 선택형 Groq 백엔드/클라이언트를 삭제하지 마세요. RecordsScreen에서 이전 일기/기분도 편집하며 새 diary 필드와 독립적으로 보존합니다. 기존 DiaryPaper/DiaryHome 등은 원격 보존 컴포넌트이고 현재 종이 배경은 PaperTexture입니다. 기본 정리는 규칙이며, 설정에 서버/별도 접근 코드를 입력하면 오늘에 AI 버튼이 나타나고 별도 전송 동의 후 현재 입력만 보냅니다. 연결 정보는 저장·백업하지 않습니다. 실제 Groq/배포 서버 호출은 미검증이고 UI 테스트는 모의 요청만 사용합니다. 원본 웹 실행 서버/서비스 워커는 diary와 journal 두 모듈을 모두 제공해야 합니다. 원격 deploy-onjeom 워크플로우가 소스 푸시를 자동 게시하므로 로컬 수동 게시와 경합시키지 마세요.
+
+## 최신 사용자 첨부 명세 구현 — 2026-11-05
+
+이 항목이 위의 과거 UI 설명보다 우선합니다. `docs/design/onjeom_ui_ux_design_system.md`는 사용자가 수정하지 말라고 한 원본입니다. 임의 포맷·변경하지 말고 `docs/design/IMPLEMENTATION_AUDIT.md`를 함께 읽으세요. 토큰은 `diary-theme.ts`, 폰트 6개는 `assets/fonts`와 `font-assets.ts`, 실제 텍스트는 `Type.tsx`를 통합니다. 정적 weight별 alias 파일을 선택하므로 Text의 최종 fontWeight normal을 임의로 바꾸지 마세요.
+
+OnboardingCover는 설치당 최초 표지이며 기존 DB metadata/웹 IDB의 intro-seen 키에 기록합니다. 사용자 데이터 삭제·백업 복원과 별도입니다. Home은 날짜/직접 줄노트/작업 우측 직접 완료 원/하단 식물입니다. ReviewList는 실제 드래그 정렬과 인라인 수정, Sheet.footer는 고정 확정입니다. Focus의 작은 단계는 2~3개 인라인 입력입니다. 네 번째 완료 시 PlantMoment에 꽃이 피어나며 자동 시트를 열지 않습니다. 사용자가 꽃말 버튼을 눌러야 상세가 열립니다. RecordsScreen은 월 달력을 유지하고 아래에 과거 페이지를 펼치며 원문 편집은 ID·날짜·작업·꽃을 유지합니다. Seed는 날짜순과 복원/비우기입니다. 기존 journals·선택형 Groq·원본 도메인·DB 버전3을 보존했습니다.
+
+지정 HEX의 보조 글자/버튼 대비가 일반 글자 AA에 미달합니다. HEX 우선 유지 vs 최소 보정 질문에 답변을 받지 못했으므로 임의 보정하지 않았으며 AA 전체 준수라고 쓰지 마세요. 클라우드 제공자도 답변이 없어 기존 파일 백업/공유/복원을 유지하고 자동 서버를 만들지 않았습니다. 실제 실기기 키보드/햅틱/큰 글꼴/스크린리더/SQLite 런타임은 미실행입니다. 테스트 최종 결과는 VALIDATION.md 최신 항목을 보세요. 캡처는 00-cover와01~09이며 pre-spec-today는 이번 명세 적용 직전 화면입니다.

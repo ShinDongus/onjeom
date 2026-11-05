@@ -39,6 +39,8 @@ test("실제 SQLite: 마이그레이션, 재실행 복원, 광고 취소 꽃 보
   let db = adapter(path);
   try {
     let store = await createStore(db);
+    assert.equal(await store.hasSeenIntro(), false);
+    await store.markIntroSeen();
     let s = addTasks(initialState(), ["a", "b", "c", "d", "씨앗"]);
     for (const t of s.tasks.slice(0, 4))
       s = completeTask(s, t.id, { day: "2026-06-01", random: () => 0.01 });
@@ -53,6 +55,7 @@ test("실제 SQLite: 마이그레이션, 재실행 복원, 광고 취소 꽃 보
     db = adapter(path);
     store = await createStore(db);
     assert.deepEqual(await store.load(), s);
+    assert.equal(await store.hasSeenIntro(), true);
     assert.equal((await store.load()).flowers[0].registeredAt, null);
     const backup = await store.backup();
     await store.clear();

@@ -1,22 +1,30 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   Pressable,
   StyleSheet,
-  Text,
   View,
   useWindowDimensions,
 } from "react-native";
-import { BotanicalSticker } from "./PaperTexture";
-import { diary, ink, line, sage, muted } from "./diary-theme";
+import Svg, { Ellipse } from "react-native-svg";
+import AppIcon from "./AppIcon";
+import { Text, TextInput } from "./Type";
+import { diary, typography, ink, muted, line } from "./diary-theme";
+import PlantMoment from "./PlantMoment";
+import ActionButton from "./ActionButton";
+import { useReducedMotion } from "./Motion";
 type Props = {
-  current?: { title: string };
+  current?: { id: string; title: string };
   progress: number;
   busy: boolean;
   onComplete: () => void;
-  onLater: () => void;
-  onSplit: () => void;
+  onLater: () => Promise<unknown> | void;
+  onSplit: (steps: string[]) => void;
   onCompose: () => void;
   onBack: () => void;
+  bloom?: any;
+  onFlower: () => void;
 };
 export default function FocusScreen({
   current,
@@ -27,115 +35,217 @@ export default function FocusScreen({
   onSplit,
   onCompose,
   onBack,
+  bloom,
+  onFlower,
 }: Props) {
-  const { height } = useWindowDimensions();
+  const { height } = useWindowDimensions(),
+    reduced = useReducedMotion(),
+    travel = useRef(new Animated.Value(0)).current;
+  const [splitting, setSplitting] = useState(false),
+    [parts, setParts] = useState(["", ""]),
+    [moving, setMoving] = useState(false);
+  useEffect(() => {
+    travel.setValue(0);
+    setSplitting(false);
+    setParts(["", ""]);
+    setMoving(false);
+  }, [current?.id]);
+  const later = () => {
+    if (busy || moving) return;
+    setMoving(true);
+    Animated.timing(travel, {
+      toValue: 1,
+      duration: reduced ? 150 : 300,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start(() => {
+      void Promise.resolve(onLater()).finally(() => {
+        travel.setValue(0);
+        setMoving(false);
+      });
+    });
+  };
   return (
-    <View style={s.page} testID="one-step-mode">
+    <View
+      style={[s.page, { minHeight: Math.max(0, height - 180) }]}
+      testID="one-step-mode"
+    >
       <Pressable
         accessibilityRole="button"
+        accessibilityLabel="오늘로 돌아가기"
         onPress={onBack}
         style={[diary.quiet, { alignSelf: "flex-start" }]}
       >
-        <Text style={s.back}>‹ 오늘의 페이지</Text>
+        <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+          <AppIcon name="이전" color={ink} />
+          <Text style={typography.action}>오늘로 돌아가기</Text>
+        </View>
       </Pressable>
-      <Text style={s.eyebrow}>한 걸음 모드</Text>
-      <View style={s.task}>
-        <Text style={s.number}>하나.</Text>
-        <Text accessibilityRole="header" style={s.title}>
+      <Animated.View
+        style={[
+          s.center,
+          {
+            opacity: travel.interpolate({
+              inputRange: [0, 1],
+              outputRange: [1, 0],
+            }),
+            transform: reduced
+              ? []
+              : [
+                  {
+                    translateX: travel.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, 90],
+                    }),
+                  },
+                  {
+                    translateY: travel.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, -140],
+                    }),
+                  },
+                  {
+                    scale: travel.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [1, 0.08],
+                    }),
+                  },
+                ],
+          },
+        ]}
+      >
+        <Text
+          accessibilityRole="header"
+          style={[typography.title, { textAlign: "center" }]}
+        >
           {current?.title || "잠시, 여백을 누려요."}
         </Text>
-        <Text style={s.helper}>
-          {current
-            ? "이것 하나만, 나의 속도로."
-            : "다음 한 걸음은 준비됐을 때 시작해요."}
-        </Text>
-      </View>
-      <View style={s.plant}>
-        <BotanicalSticker
-          size={Math.max(86, Math.min(145, height - 535))}
-          stage={progress}
-          color="#d8b8bd"
-        />
-        <View style={s.dots}>
-          {[0, 1, 2, 3].map((i) => (
-            <View
+      </Animated.View>
+      {moving && !reduced && (
+        <Animated.View
+          pointerEvents="none"
+          style={{
+            position: "absolute",
+            alignSelf: "center",
+            top: 140,
+            opacity: travel.interpolate({
+              inputRange: [0, 0.25, 0.8, 1],
+              outputRange: [0, 1, 1, 0],
+            }),
+            transform: [
+              {
+                translateX: travel.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 90],
+                }),
+              },
+              {
+                translateY: travel.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, -140],
+                }),
+              },
+            ],
+          }}
+        >
+          <Svg width={24} height={24} viewBox="0 0 24 24" aria-hidden>
+            <Ellipse
+              cx={12}
+              cy={12}
+              rx={6}
+              ry={4}
+              fill="#9B8766"
+              transform="rotate(-25 12 12)"
+            />
+          </Svg>
+        </Animated.View>
+      )}
+      {splitting && (
+        <View style={{ gap: 16 }}>
+          {parts.map((part, i) => (
+            <TextInput
               key={i}
-              style={[s.dot, i < progress && { backgroundColor: sage }]}
+              accessibilityLabel={`작은 단계 ${i + 1}`}
+              value={part}
+              onChangeText={(value) =>
+                setParts((s) => s.map((text, j) => (j === i ? value : text)))
+              }
+              placeholder={`${i + 1}번째 작은 행동`}
+              placeholderTextColor={muted}
+              multiline
+              maxLength={500}
+              style={s.input}
             />
           ))}
+          {parts.length === 2 && (
+            <ActionButton
+              title="작은 단계 하나 더 적기"
+              secondary
+              onPress={() => setParts([...parts, ""])}
+            />
+          )}
+          <ActionButton
+            title="나누기 취소"
+            secondary
+            onPress={() => setSplitting(false)}
+          />
         </View>
-        <Text style={s.growth}>작은 행동 {4 - progress}개 뒤에 만날 꽃</Text>
-      </View>
-      {current ? (
-        <View style={s.actions}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="완료했어요"
-            disabled={busy}
-            accessibilityState={{ disabled: busy }}
-            onPress={onComplete}
-            style={[diary.primary, busy && { opacity: 0.5 }]}
-          >
-            <Text style={diary.primaryText}>✓ 완료했어요</Text>
-          </Pressable>
-          <View style={s.secondary}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="더 작게 나누기"
-              onPress={onSplit}
-              style={diary.quiet}
-            >
-              <Text style={s.back}>더 작게 나누기</Text>
-            </Pressable>
-            <View style={s.divider} />
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="나중에 하기"
-              onPress={onLater}
-              disabled={busy}
-              accessibilityState={{ disabled: busy }}
-              style={diary.quiet}
-            >
-              <Text style={s.back}>나중에 하기</Text>
-            </Pressable>
-          </View>
-        </View>
-      ) : (
-        <Pressable
-          accessibilityRole="button"
-          onPress={onCompose}
-          style={diary.primary}
-        >
-          <Text style={diary.primaryText}>오늘의 다이어리에 적기</Text>
-        </Pressable>
       )}
+      <PlantMoment progress={progress} bloom={bloom} onFlower={onFlower} />
+      <View style={{ gap: 16 }}>
+        {current ? (
+          <>
+            <ActionButton
+              title={splitting ? "작은 단계로 바꾸기" : "완료했어요"}
+              disabled={
+                busy || moving || (splitting && parts.some((p) => !p.trim()))
+              }
+              onPress={() => (splitting ? onSplit(parts) : onComplete())}
+            />
+            <View style={s.secondary}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="더 작게 나누기"
+                onPress={() => setSplitting(true)}
+                disabled={busy || moving}
+                style={diary.quiet}
+              >
+                <Text style={typography.action}>더 작게 나누기</Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="나중에 하기"
+                onPress={later}
+                disabled={busy || moving}
+                style={diary.quiet}
+              >
+                <Text style={typography.action}>나중에 하기</Text>
+              </Pressable>
+            </View>
+          </>
+        ) : (
+          <ActionButton title="오늘의 다이어리에 적기" onPress={onCompose} />
+        )}
+      </View>
     </View>
   );
 }
 const s = StyleSheet.create({
-  page: { gap: 16 },
-  back: { color: muted, fontSize: 13 },
-  eyebrow: { color: sage, fontSize: 12, textAlign: "center", letterSpacing: 2 },
-  task: { gap: 16, paddingVertical: 20 },
-  number: { fontSize: 14, color: "#a0a48f", textAlign: "center" },
-  title: {
-    fontSize: 27,
-    lineHeight: 41,
-    color: ink,
-    fontWeight: "500",
-    textAlign: "center",
-    letterSpacing: -0.8,
-  },
-  helper: { fontSize: 12, color: muted, textAlign: "center" },
-  plant: { alignItems: "center", gap: 10 },
-  dots: { flexDirection: "row", gap: 6 },
-  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: "#e0e3d2" },
-  growth: { fontSize: 11, color: muted },
-  actions: { gap: 12, paddingTop: 8 },
+  page: { gap: 32, flex: 1 },
+  center: { flex: 1, minHeight: 120, justifyContent: "center" },
   secondary: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-around",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 8,
   },
-  divider: { height: 14, width: 1, backgroundColor: line },
+  input: {
+    ...typography.body,
+    minHeight: 56,
+    borderBottomWidth: 1,
+    borderBottomColor: line,
+    color: ink,
+    padding: 0,
+    backgroundColor: "transparent",
+  },
 });

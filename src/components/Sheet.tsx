@@ -1,5 +1,4 @@
-import React from "react";
-import DiaryPaper from "./PaperTexture";
+import React, { useRef } from "react";
 import {
   Animated,
   KeyboardAvoidingView,
@@ -11,19 +10,26 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { SheetScrollContext } from "./SheetContext";
+import { Text } from "./Type";
+import { sand, line, typography } from "./diary-theme";
+import PaperTexture from "./PaperTexture";
 type Props = {
   visible: boolean;
   onClose: () => void;
   children: React.ReactNode;
   opacity?: Animated.Value | number;
+  footer?: React.ReactNode;
 };
 export default function Sheet({
   visible,
   onClose,
   children,
   opacity = 1,
+  footer,
 }: Props) {
   const insets = useSafeAreaInsets();
+  const scroll = useRef<ScrollView>(null);
   return (
     <Modal
       visible={visible}
@@ -44,12 +50,9 @@ export default function Sheet({
         <Animated.View
           testID="bottom-sheet"
           accessibilityViewIsModal
-          style={[
-            s.panel,
-            { opacity, paddingBottom: Math.max(insets.bottom, 14) },
-          ]}
+          style={[s.panel, { opacity, paddingBottom: insets.bottom + 24 }]}
         >
-          <DiaryPaper />
+          <PaperTexture />
           <View style={s.top}>
             <View style={s.handle} />
             <Pressable
@@ -58,17 +61,25 @@ export default function Sheet({
               onPress={onClose}
               style={s.close}
             >
-              <View style={s.crossA} />
-              <View style={s.crossB} />
+              <Text style={typography.action}>닫기</Text>
             </Pressable>
           </View>
-          <ScrollView
-            style={s.scroll}
-            contentContainerStyle={s.content}
-            keyboardShouldPersistTaps="handled"
-          >
-            {children}
-          </ScrollView>
+          <SheetScrollContext.Provider value={scroll}>
+            <ScrollView
+              ref={scroll}
+              style={s.scroll}
+              contentContainerStyle={s.content}
+              keyboardShouldPersistTaps="handled"
+              automaticallyAdjustKeyboardInsets
+            >
+              {children}
+            </ScrollView>
+          </SheetScrollContext.Provider>
+          {footer && (
+            <View style={s.footer} testID="sheet-footer">
+              {footer}
+            </View>
+          )}
         </Animated.View>
       </KeyboardAvoidingView>
     </Modal>
@@ -78,50 +89,38 @@ const s = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(30,49,35,.32)",
-    paddingTop: 32,
+    backgroundColor: "rgba(52,75,60,.28)",
   },
   panel: {
     width: "100%",
     maxWidth: 480,
-    maxHeight: "94%",
+    maxHeight: "85%",
     alignSelf: "center",
     flexShrink: 1,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    backgroundColor: "#faf6eb",
-    shadowColor: "#203821",
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: -8 },
-    elevation: 2,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    backgroundColor: sand,
     overflow: "hidden",
+    elevation: 0,
   },
-  top: { height: 36, alignItems: "center", justifyContent: "center" },
-  handle: { width: 32, height: 4, borderRadius: 3, backgroundColor: "#d4dbc9" },
+  top: { height: 60, paddingTop: 16, alignItems: "center" },
+  handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: line },
   close: {
     position: "absolute",
-    right: 9,
-    top: 0,
+    right: 12,
+    top: 8,
     width: 44,
     height: 44,
     alignItems: "center",
     justifyContent: "center",
   },
-  crossA: {
-    position: "absolute",
-    width: 12,
-    height: 1.5,
-    backgroundColor: "#89967d",
-    transform: [{ rotate: "45deg" }],
-  },
-  crossB: {
-    position: "absolute",
-    width: 12,
-    height: 1.5,
-    backgroundColor: "#89967d",
-    transform: [{ rotate: "-45deg" }],
-  },
   scroll: { flexGrow: 0 },
-  content: { paddingHorizontal: 24, paddingTop: 0, paddingBottom: 16, gap: 12 },
+  content: { paddingHorizontal: 24, gap: 32 },
+  footer: {
+    paddingTop: 16,
+    paddingHorizontal: 24,
+    borderTopWidth: 1,
+    borderTopColor: line,
+    gap: 12,
+  },
 });

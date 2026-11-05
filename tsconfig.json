@@ -2,7 +2,8 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "allowJs": false
+    "allowJs": false,
+    "allowUnreachableCode": false
   },
   "include": ["App.tsx", "src/**/*.ts", "app.config.ts"]
 }

@@ -103,3 +103,14 @@ export function recordedDays(state) {
     ].filter(Boolean),
   );
 }
+
+export function editThoughtRecord(state, id, original) {
+  if (typeof original !== "string" || original.length > 10000)
+    throw Error("생각을 10,000자 이내로 적어주세요.");
+  if (!state.thoughts.some((t) => t.id === id))
+    throw Error("생각 기록을 찾지 못했어요.");
+  return {
+    ...state,
+    thoughts: state.thoughts.map((t) => (t.id === id ? { ...t, original } : t)),
+  };
+}

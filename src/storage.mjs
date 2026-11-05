@@ -49,6 +49,20 @@ export async function createStore(db, { recovered = null } = {}) {
     });
   };
   return {
+    async hasSeenIntro() {
+      return (
+        (
+          await db.getFirstAsync(
+            "SELECT value FROM metadata WHERE key = 'intro-seen'",
+          )
+        )?.value === "1"
+      );
+    },
+    async markIntroSeen() {
+      await db.runAsync(
+        "INSERT INTO metadata (key,value) VALUES ('intro-seen','1') ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+      );
+    },
     async load() {
       const row = await db.getFirstAsync(
         "SELECT payload FROM app_state WHERE id = 1",

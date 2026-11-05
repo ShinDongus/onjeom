@@ -2,7 +2,9 @@
 
 현재 웹앱 주소: **https://shindongus.github.io/onjeom/**
 
-최신 UI는 **오늘 / 정원 / 도감 / 기록**의 네 탭을 가진 종이 다이어리입니다. 홈에서 바로 생각을 쓰고, 검토 메모를 거쳐 한 걸음씩 실행합니다. 달력에서 지난 날짜의 생각·완료 표시·꽃·짧은 기록을 펼칩니다. [화면 비교](https://shindongus.github.io/onjeom/review/)와 [캡처 원본](docs/ui-review.html)을 준비했습니다. 2026-11-04 앱과 비교 페이지·새 화면 캡처 9개의 실제 공개 응답 검증을 통과했습니다. 최신 게시 검증은 `.github/pages-live-status.json`에서 확인합니다.
+최신 UI는 사용자 첨부 [디자인 명세](docs/design/onjeom_ui_ux_design_system.md)의 종이 색상·Pretendard/Noto Serif KR·여백·버튼 수치를 적용한 **오늘 / 정원 / 도감 / 기록** 다이어리입니다. 첫 실행 표지, 직접 생각 입력, 드래그 검토, 한 걸음의 인라인 분할, 조용한 개화, 3×3 정원과 한 종씩 도감을 구현했습니다. 달력은 그대로 둔 채 아래에서 지난 생각 원문과 회고를 편집합니다. [화면 비교](https://shindongus.github.io/onjeom/review/)와 [구현 대조표·명세 충돌/미검증 항목](docs/design/IMPLEMENTATION_AUDIT.md)을 참고하세요. 최신 공개 배포 상태는 `.github/pages-live-status.json`에서 확인합니다.
+
+지정 폰트는 각 400/500/600의 6개 파일(약 44.8 MiB)을 번들·오프라인 캐시에 내장합니다. `expo-font`와 네이티브 버튼 피드백용 `expo-haptics`를 사용합니다. 지정 HEX와 일반 글자 AA 대비 조건에 충돌이 있어 색상을 임의로 바꾸지 않았습니다. 자동 클라우드 서버는 연결하지 않았으며 기존 파일 백업·공유·복원은 유지합니다.
 
 2026-11-04 GitHub Pages가 `gh-pages / (root)`에서 배포 완료된 것을 확인했고, GitHub의 검증 작업에서 앱 HTML·웹 번들·설치 스크립트·매니페스트·Apple Touch 아이콘·서비스 워커가 모두 HTTP200으로 응답했습니다. 아이폰 Safari에서 열어 공유 → 홈 화면에 추가로 설치할 수 있습니다. 실물 아이폰 설치 자체는 별도 확인이 필요합니다. 아래의 초기 설정 실패 기록은 활성화 이전 상황입니다.
 

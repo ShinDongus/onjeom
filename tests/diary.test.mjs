@@ -94,3 +94,27 @@ test("원격에 추가된 journals 일기·기분과 새 다이어리 확장을 
   assert.equal(diaryDay(restored, "2026-11-03").draft, "새 생각");
   assert.equal(recordedDays(restored).has("2026-11-03"), true);
 });
+
+test("기록 원문 편집은 생각 ID·날짜·기존 작업·개화 기록을 바꾸지 않음", async () => {
+  const { editThoughtRecord } = await import("../src/diary.mjs");
+  let s = addTasks(initialState(), [
+    "컵 씻기",
+    "물 마시기",
+    "창문 열기",
+    "책 읽기",
+  ]);
+  for (const t of s.tasks)
+    s = completeTask(s, t.id, { day: "2026-11-05", random: () => 0.5 });
+  const next = editThoughtRecord(
+    s,
+    s.thoughts[0].id,
+    "조금 더 다정하게 고친 하루",
+  );
+  assert.deepEqual(next.tasks, s.tasks);
+  assert.deepEqual(next.flowers, s.flowers);
+  assert.equal(next.thoughts[0].createdAt, s.thoughts[0].createdAt);
+  assert.equal(next.thoughts[0].id, s.thoughts[0].id);
+  assert.throws(() =>
+    editThoughtRecord(s, s.thoughts[0].id, "x".repeat(10001)),
+  );
+});

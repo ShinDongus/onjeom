@@ -1,3 +1,4 @@
+import { openDiary } from "../helpers/open-diary.mjs";
 import { test, expect } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import {
@@ -43,7 +44,7 @@ test("날짜별 다이어리·희귀/시즌 도감·한 문장 저장·백업 �
   state = setDiaryEntry(state, "2026-06-01", {
     note: "햇살을 오래 바라본 날.",
   });
-  await page.goto("/");
+  await openDiary(page);
   await button(page, "설정 열기").click();
   const choose = page.waitForEvent("filechooser");
   await button(page, "백업 파일에서 복원").click();
@@ -67,7 +68,7 @@ test("날짜별 다이어리·희귀/시즌 도감·한 문장 저장·백업 �
   await button(page, "생각 정리하기").click();
   await expect(page.getByTestId("bottom-sheet")).toBeVisible();
   await page.screenshot({ path: "docs/screenshots/03-review.png" });
-  await button(page, "한 걸음 모드 시작").click();
+  await button(page, "오늘의 작은 일로 확정하기").click();
   await expect(page.getByTestId("one-step-mode")).toBeVisible();
   await page.screenshot({ path: "docs/screenshots/04-one-step.png" });
   await button(page, "완료했어요").click();
@@ -84,10 +85,10 @@ test("날짜별 다이어리·희귀/시즌 도감·한 문장 저장·백업 �
     page.getByRole("heading", { name: "데이지", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("색상 금빛 · 희귀 색상", { exact: true }),
+    page.getByText("금빛 · 희귀 색상", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("금빛 · 2026-06-01", { exact: true }),
+    page.getByText("최초 개화일 2026-06-01", { exact: true }),
   ).toBeVisible();
   await page.screenshot({ path: "docs/screenshots/06-catalog.png" });
   for (let i = 0; i < 13; i++) await button(page, "다음 도감 페이지").click();
@@ -108,8 +109,8 @@ test("날짜별 다이어리·희귀/시즌 도감·한 문장 저장·백업 �
     page.getByRole("heading", { name: "6월 1일의 페이지", exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText(state.thoughts[0].original, { exact: true }),
-  ).toBeVisible();
+    page.getByLabel("생각 원문 1 수정", { exact: true }),
+  ).toHaveValue(state.thoughts[0].original);
   await expect(page.getByText("책상 닦기", { exact: true })).toBeVisible();
   await expect(button(page, "데이지 기록 보기")).toBeVisible();
   await expect(page.getByLabel("짧은 기록", { exact: true })).toHaveValue(
@@ -119,6 +120,22 @@ test("날짜별 다이어리·희귀/시즌 도감·한 문장 저장·백업 �
     path: "docs/screenshots/08-record-page.png",
     fullPage: true,
   });
+  await expect(
+    page.getByRole("heading", { name: "2026년 6월", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole("button", {
+        name: "2026-06-01 기록 열기, 기록 있음",
+        exact: true,
+      })
+      .getByTestId("calendar-bloom-dot"),
+  ).toHaveCSS("background-color", "rgb(213, 171, 187)");
+  await page
+    .getByLabel("생각 원문 1 수정", { exact: true })
+    .fill("작은 행동들을 돌아보고 원문을 다정하게 고쳤어요.");
+  await button(page, "생각 원문 1 저장").click();
+  await expect(button(page, "생각 원문 1 저장")).toHaveText("✓ 저장됨");
   await expect(page.getByLabel("이전 일기 수정")).toHaveValue(
     "예전 버전에서 남겨둔 일기",
   );
@@ -143,6 +160,15 @@ test("날짜별 다이어리·희귀/시즌 도감·한 문장 저장·백업 �
   await button(page, "백업 파일 내보내기").click();
   const { readFile } = await import("node:fs/promises");
   const backup = await readFile(await (await download).path(), "utf8");
+  expect(
+    importBackup(backup).thoughts.find((t) => t.id === state.thoughts[0].id)
+      .original,
+  ).toBe("작은 행동들을 돌아보고 원문을 다정하게 고쳤어요.");
+  expect(
+    importBackup(backup).thoughts.find((t) => t.id === state.thoughts[0].id)
+      .createdAt,
+  ).toBe(state.thoughts[0].createdAt);
+  expect(importBackup(backup).flowers).toEqual(state.flowers);
   expect(importBackup(backup).journals["2026-06-01"].text).toBe(
     "이전 일기도 다정하게 이어서 썼어요.",
   );
@@ -175,16 +201,14 @@ test("날짜별 다이어리·희귀/시즌 도감·한 문장 저장·백업 �
   );
   await page.getByRole("tab", { name: "오늘", exact: true }).click();
   await page.getByLabel("자유로운 생각 입력").fill("오늘 날짜에 남겨둘 생각");
-  await button(page, "생각 저장").click();
-  await expect(button(page, "✓ 저장됨")).toBeDisabled();
+  await button(page, "원문 저장").click();
+  await expect(button(page, "원문 저장")).toBeDisabled();
   await page.clock.setFixedTime(new Date("2026-11-05T12:00:00Z"));
   await page.evaluate(() =>
     document.dispatchEvent(new Event("visibilitychange")),
   );
   await expect(page.getByLabel("자유로운 생각 입력")).toHaveValue("");
-  await expect(
-    page.getByRole("heading", { name: "11월 5일", exact: true }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: /^11월 5일/ })).toBeVisible();
   await page.getByRole("tab", { name: "기록", exact: true }).click();
   await page
     .getByRole("button", {
@@ -193,7 +217,7 @@ test("날짜별 다이어리·희귀/시즌 도감·한 문장 저장·백업 �
     })
     .click();
   await expect(
-    page.getByText("오늘 날짜에 남겨둘 생각", { exact: true }),
+    page.getByLabel("저장한 생각 수정", { exact: true }),
   ).toBeVisible();
   expect(errors).toEqual([]);
 });
@@ -216,7 +240,7 @@ test("선택형 Groq 보존: 전송 동의·현재 입력만 요청·검토와 �
       });
     },
   );
-  await page.goto("/");
+  await openDiary(page);
   await button(page, "설정 열기").click();
   await page
     .getByLabel("Groq 백엔드 주소")
@@ -245,7 +269,7 @@ test("선택형 Groq 보존: 전송 동의·현재 입력만 요청·검토와 �
       { exact: true },
     ),
   ).toBeVisible();
-  await button(page, "한 걸음 모드 시작").click();
+  await button(page, "오늘의 작은 일로 확정하기").click();
   await expect(
     page.getByRole("heading", { name: "물 마시기", exact: true }),
   ).toBeVisible();

@@ -1,14 +1,16 @@
+import { Text, TextInput } from "./Type";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
   Pressable,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from "react-native";
 import FlowerArt from "./FlowerArt";
-import Svg, { Path, Ellipse } from "react-native-svg";
+import AppIcon from "./AppIcon";
+import { typography, line, paper, muted, ink, sand } from "./diary-theme";
+import Svg, { Path, Ellipse, Circle } from "react-native-svg";
 export type GardenItem = {
   id: string;
   name: string;
@@ -40,7 +42,11 @@ export default function GardenPager({
     () => Array.from({ length: count }, (_, i) => i),
     [count],
   );
-  const art = Math.min(76, Math.max(48, ((width - 24) / 3) * 0.74));
+  const art = Math.min(
+    Math.max(38, (screen.height - 620) / 4.03125),
+    76,
+    Math.max(48, ((width - 24) / 3) * 0.74),
+  );
   const cellHeight = Math.ceil((art * 215) / 160 + 34),
     height = cellHeight * 3 + 42;
   const go = (next: number) => {
@@ -188,8 +194,36 @@ export default function GardenPager({
                         importantForAccessibility="no-hide-descendants"
                         style={[s.cell, s.empty, { height: cellHeight }]}
                       >
-                        <FlowerArt stage={1} potted={false} size={art} />
-                        <Text style={s.emptyText}>아직 여백</Text>
+                        <Svg
+                          width={44}
+                          height={44}
+                          viewBox="0 0 44 44"
+                          aria-hidden
+                        >
+                          <Ellipse
+                            cx={20}
+                            cy={27}
+                            rx={12}
+                            ry={3}
+                            fill="#9B8766"
+                            opacity=".08"
+                          />
+                          <Ellipse
+                            cx={26}
+                            cy={24}
+                            rx={4}
+                            ry={2}
+                            fill="#9B8766"
+                            opacity=".18"
+                          />
+                          <Circle
+                            cx={13}
+                            cy={25}
+                            r={1}
+                            fill="#9B8766"
+                            opacity=".15"
+                          />
+                        </Svg>
                       </View>
                     );
                   })}
@@ -208,7 +242,7 @@ export default function GardenPager({
           onPress={() => go(page - 1)}
           style={[s.arrow, page === 0 && s.disabled]}
         >
-          <Text style={s.arrowText}>‹</Text>
+          <AppIcon name="이전" color={ink} />
         </Pressable>
         <View style={s.center}>
           <Text accessibilityLiveRegion="polite" style={s.page}>
@@ -224,7 +258,7 @@ export default function GardenPager({
           onPress={() => go(page + 1)}
           style={[s.arrow, page === count - 1 && s.disabled]}
         >
-          <Text style={s.arrowText}>›</Text>
+          <AppIcon name="다음" color={ink} />
         </Pressable>
       </View>
     </View>
@@ -234,10 +268,10 @@ const s = StyleSheet.create({
   container: { gap: 16 },
   frame: {
     width: "100%",
-    borderRadius: 4,
+    borderRadius: 0,
     overflow: "hidden",
     backgroundColor: "#f2f2e5",
-    borderWidth: 1,
+    borderWidth: 0,
     borderColor: "#e3e3d1",
   },
   row: { flexDirection: "row", gap: 2 },
@@ -251,16 +285,10 @@ const s = StyleSheet.create({
     backgroundColor: "transparent",
     paddingHorizontal: 3,
   },
-  name: {
-    fontSize: 12,
-    lineHeight: 17,
-    color: "#344c3b",
-    alignSelf: "stretch",
-    textAlign: "center",
-  },
-  note: { fontSize: 10, lineHeight: 15, color: "#718168" },
-  empty: { opacity: 0.35 },
-  emptyText: { fontSize: 10, color: "#899780", marginTop: 0, lineHeight: 32 },
+  name: { ...typography.caption, alignSelf: "stretch", textAlign: "center" },
+  note: typography.caption,
+  empty: { opacity: 1 },
+  emptyText: typography.caption,
   controls: {
     flexDirection: "row",
     alignItems: "center",
@@ -278,6 +306,6 @@ const s = StyleSheet.create({
   arrowText: { fontSize: 29, color: "#49674e", lineHeight: 32 },
   disabled: { opacity: 0.3 },
   center: { alignItems: "center", gap: 4 },
-  page: { fontSize: 14, color: "#344c3b", fontWeight: "600" },
-  hint: { fontSize: 11, color: "#81917a" },
+  page: typography.caption,
+  hint: typography.caption,
 });

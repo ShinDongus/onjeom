@@ -1,7 +1,8 @@
+import { openDiary } from "../helpers/open-diary.mjs";
 import { test, expect } from "@playwright/test";
 const button = (page, name) => page.getByRole("button", { name, exact: true });
 test("한 장의 홈·네 탭·빈 정원 9자리와 작은 화면", async ({ page }) => {
-  await page.goto("/");
+  await openDiary(page);
   await expect(page.getByLabel("자유로운 생각 입력")).toBeVisible();
   await expect(page.getByRole("tab")).toHaveText([
     "오늘",
@@ -29,10 +30,10 @@ test("생각 저장·검토 메모 유지·홈 이어 하기·작은 단계 전�
   page,
 }) => {
   await page.setViewportSize({ width: 320, height: 640 });
-  await page.goto("/");
+  await openDiary(page);
   await page.getByLabel("자유로운 생각 입력").fill("저녁 준비하기\n책 읽기");
-  await button(page, "생각 저장").click();
-  await expect(button(page, "✓ 저장됨")).toBeDisabled();
+  await button(page, "원문 저장").click();
+  await expect(button(page, "원문 저장")).toBeDisabled();
   await page.reload();
   await expect(page.getByLabel("자유로운 생각 입력")).toHaveValue(
     "저녁 준비하기\n책 읽기",
@@ -48,11 +49,15 @@ test("생각 저장·검토 메모 유지·홈 이어 하기·작은 단계 전�
   await expect(page.getByLabel("할 일 1 수정", { exact: true })).toHaveValue(
     "저녁 준비부터 하기",
   );
-  await button(page, "한 걸음 모드 시작").click();
+  await button(page, "오늘의 작은 일로 확정하기").click();
   await page.getByRole("tab", { name: "오늘", exact: true }).click();
-  await button(page, "한 걸음 시작하기").click();
+  await page
+    .getByRole("button", { name: / 한 걸음 시작하기$/ })
+    .first()
+    .click();
   await button(page, "더 작게 나누기").click();
-  await page.getByLabel("작은 단계 입력").fill("냉장고 열기\n채소 꺼내기");
+  await page.getByLabel("작은 단계 1", { exact: true }).fill("냉장고 열기");
+  await page.getByLabel("작은 단계 2", { exact: true }).fill("채소 꺼내기");
   await button(page, "작은 단계로 바꾸기").click();
   await expect(
     page.getByRole("heading", { name: "냉장고 열기", exact: true }),
@@ -72,13 +77,13 @@ test("입력 중 작은 뷰포트에서도 스크롤로 검토·실행 버튼에
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 480 });
-  await page.goto("/");
+  await openDiary(page);
   const input = page.getByLabel("자유로운 생각 입력");
   await input.fill("주방 정리하기\n빨래 개기\n편지 쓰기");
   await expect(input).toBeFocused();
   await button(page, "생각 정리하기").click();
   await expect(page.getByLabel("할 일 1 수정", { exact: true })).toBeVisible();
-  await button(page, "한 걸음 모드 시작").click();
+  await button(page, "오늘의 작은 일로 확정하기").click();
   await expect(
     page.getByRole("heading", { name: "주방 정리하기", exact: true }),
   ).toBeVisible();

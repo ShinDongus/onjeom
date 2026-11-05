@@ -100,3 +100,15 @@ npm run check, npm run format:check, iOS/Android Hermes 번들 생성 통과. �
 원격 자동 배포와 로컬 수동 게시가 경합하지 않도록 통합 소스 푸시 후 배포 워크플로우를 사용한다. 공개 사이트·비교 페이지의 실제 응답 검증 결과는 아래 최신 배포 기록에 별도로 남긴다. 원격에 있던 journals/백엔드 기능의 상세는 docs/GROQ_SETUP.md와 기존 테스트를 함께 참고한다.
 
 최신 공개 배포 확인: 통합 소스 ae095a58ae20dc28b72fc680087a2e01dab41a65가 자동 배포되어 gh-pages a2200c19b3a09468d350385ca871695d3c4f883d에 반영됐다. 검증 실행 https://github.com/ShinDongus/onjeom/actions/runs/41776879709 의 sourceSha는 50e44efdf471d12b1585a2dc1fcbb44863512c0d이고 expectedCommit/build.commit이 해당 배포 SHA와 일치한다. verified=true, phase=ready, build.status=built를 확인했다. 공개 HTML은 최신 배포의 index.html과 동일하며 새 web index-703f0d55305c31ec0d37375608ffe221.js, 설치 자산, /review/ 비교 페이지와 새 화면 PNG 9개가 HTTP200/올바른 MIME으로 응답했다. 결과 커밋 121e0f39dc6d610876155e1e4362c92a8fea8233를 수신했다. 공개 HTTP 검증과 로컬 기능 테스트이며 실물 iPhone 검증은 별도다.
+
+## 사용자 첨부 디자인 명세 적용 — 2026-11-05
+
+`onjeom_ui_ux_design_system.md`를 바이트 그대로 docs/design에 보관하고 지정 HEX 7개·Pretendard/Noto Serif KR 각 400/500/600·26/20/17/16/15/13px 타입·24/20/32 여백·52px/r12 주 버튼·64px 탭·85%/r24 하단 시트를 적용했다. 폰트 6개의 원본 출처·라이선스·SHA-256을 기록했고 fontTools로 실제 weight 400/500/600을 확인했다. 약 44.8 MiB의 원본 폰트를 Expo/Web에 포함한다.
+
+표지→직접 줄노트→드래그 검토→한 걸음 인라인 2~3분할, 홈의 22px 완료 원/44px 터치, 4회 완료 후 자동 팝업 없는 하단 개화, 3×3 계절 정원, 한 종씩 도감, 달력 아래 동일 화면 기록/원문 편집을 구현했다. 원문 편집은 ID·시간·기존 작업·꽃을 유지한다. 씨앗은 날짜순과 복원/비우기다. 기존 원본 prototype, journals·선택형 Groq·성장/확률/광고 규칙, 백업 v1/v2/v3, SQLite user_version 3은 유지했다. 설치당 표지 표시 여부만 기존 메타데이터에 별도 저장하며 사용자 데이터 복원과 독립적이다.
+
+최종 실행: `npm test` **54개**, `npm run test:mobile` **12개**, `npm run test:browser` **4개**, `npm run test:pages` **1개**, 합계 **71개 통과**, 최종 실패/스킵 없음. TypeScript·Prettier 검사와 iOS/Android Hermes 번들 생성도 통과했다. 테스트는 실제 폰트 로드 6개, 날짜/본문/버튼/탭 실제 수치, 마우스 드래그 순서 변경, 축소 뷰포트 고정 확정 버튼, 홈 직접 완료·광고 없는 개화·사용자 선택 뒤 꽃말 열람, 원문 편집 후 백업/복원, 원본 무결성, 희귀/시즌·광고 취소·미제공·중복 등록·씨앗 복원을 포함한다. Pages 하위 경로에서 6개 폰트가 사전 캐시에 포함되고 네트워크 차단/재실행 뒤 모두 실제로 로드되며 작업을 완료·저장하는 것을 확인했다. 표지와 01~09 캡처를 갱신했고 명세 적용 직전 홈도 비교 페이지에 보존했다.
+
+초기 UI 검증에서 폰트 게이트 아래에 남은 중복 로딩 return으로 빈 화면이 발생했다. 중복 return을 제거하고 TypeScript allowUnreachableCode:false로 방지한 뒤 전체 모바일 테스트를 재실행해 통과했다. 변경된 명세의 접근성 이름/인라인 단계/개화 동작에 맞춰 기존 시나리오를 갱신했고 검증 범위를 제거하지 않았다.
+
+지정 HEX의 일부 일반 텍스트 대비는 AA 4.5:1에 미달한다(종이 위 보조색 약 4.471:1, 샌드 위 약 3.889:1). 사용자가 임의 수정을 금지했으므로 색상을 유지했다. 자동 클라우드 제공자가 지정되지 않아 기존 파일 백업·공유·복원을 유지했으며 자동 동기화 서버는 미연결이다. 실물 iPhone/Android의 키보드·햅틱·큰 글꼴·스크린리더·터치 스와이프·SQLite 런타임, 실제 Groq 및 광고·결제 SDK는 이번에 실행하지 않았다. 자세한 대조와 충돌은 docs/design/IMPLEMENTATION_AUDIT.md에 기록했다.

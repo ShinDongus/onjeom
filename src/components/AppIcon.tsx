@@ -19,7 +19,13 @@ export default function AppIcon({
       strokeLinejoin="round"
       aria-hidden={true}
     >
-      {name === "오늘" ? (
+      {name === "이전" ? (
+        <Path d="m14 5-7 7 7 7" />
+      ) : name === "다음" ? (
+        <Path d="m10 5 7 7-7 7" />
+      ) : name === "순서" ? (
+        <Path d="M5 6h14M5 12h14M5 18h14" />
+      ) : name === "오늘" ? (
         <>
           <Path d="M5 3h14v18H5zM8 3v18M11 8h5M11 12h5M11 16h3" />
         </>
@@ -44,8 +50,7 @@ export default function AppIcon({
         </>
       ) : name === "씨앗" ? (
         <>
-          <Rect x={4} y={7} width={16} height={13} rx={3} />
-          <Path d="M3 7h18M9 12h6M8 4h8" />
+          <Path d="M8 3h8l-2 5c6 3 9 8 6 12H4C1 16 4 11 10 8ZM8 8h8M12 17v-4m0 1q-4 0-4-3 4-1 4 3m0 2q4 0 4-3-4-1-4 3" />
         </>
       ) : (
         <>

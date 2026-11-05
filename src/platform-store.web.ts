@@ -54,6 +54,24 @@ async function write(state: any) {
 export async function openPlatformStore() {
   await database();
   return {
+    async hasSeenIntro() {
+      const db = await database();
+      return new Promise<boolean>((resolve, reject) => {
+        const tx = db.transaction("app_state", "readonly");
+        const request = tx.objectStore("app_state").get("intro-seen");
+        tx.oncomplete = () => resolve(request.result === true);
+        tx.onerror = () => reject(Error("첫 페이지 설정을 읽지 못했어요."));
+      });
+    },
+    async markIntroSeen() {
+      const db = await database();
+      return new Promise<void>((resolve, reject) => {
+        const tx = db.transaction("app_state", "readwrite");
+        tx.objectStore("app_state").put(true, "intro-seen");
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(Error("첫 페이지 설정을 저장하지 못했어요."));
+      });
+    },
     async load() {
       const raw = await read();
       return raw ? migrateState(raw) : initialState();

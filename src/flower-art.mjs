@@ -56,11 +56,10 @@ export function flowerScene({
     }),
   );
   if (stage >= 1)
-    result.push(
-      path("M79 150 Q43 152 39 123 Q67 121 79 150", "#a5b99a"),
-      path("M80 163 Q111 165 121 139 Q95 134 80 163", "#bdcdb0"),
-    );
+    result.push(path("M79 150 Q43 152 39 123 Q67 121 79 150", "#a5b99a"));
   if (stage >= 2)
+    result.push(path("M80 163 Q111 165 121 139 Q95 134 80 163", "#bdcdb0"));
+  if (stage >= 3)
     result.push(path("M79 117 Q54 115 52 95 Q73 94 79 117", "#8ba780"));
   if (stage === 0)
     result.push(

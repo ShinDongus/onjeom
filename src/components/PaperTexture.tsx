@@ -21,13 +21,13 @@ export default function DiaryPaper() {
       <Svg width="100%" height="100%" aria-hidden>
         <Defs>
           <Pattern id={id} width="54" height="67" patternUnits="userSpaceOnUse">
-            <Circle cx="7" cy="15" r=".6" fill="#b5a98f" opacity=".14" />
-            <Circle cx="31" cy="52" r=".5" fill="#b5a98f" opacity=".15" />
+            <Circle cx="7" cy="15" r=".6" fill="#b5a98f" opacity=".025" />
+            <Circle cx="31" cy="52" r=".5" fill="#b5a98f" opacity=".025" />
             <Path
               d="m18 38 3-1m22-15 3 1"
               stroke="#c1b69a"
               strokeWidth=".45"
-              opacity=".15"
+              opacity=".025"
             />
           </Pattern>
         </Defs>
@@ -36,7 +36,7 @@ export default function DiaryPaper() {
           d="M9 0V2000M12 0V2000"
           stroke="#b9ad91"
           strokeWidth=".6"
-          opacity=".12"
+          opacity=".025"
         />
       </Svg>
     </View>
