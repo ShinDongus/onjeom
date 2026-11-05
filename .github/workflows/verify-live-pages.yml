@@ -1,5 +1,5 @@
 name: Verify live Onjeom site
-# Verify diary redesign ae095a5, preserved opt-in Groq and comparison captures.
+# Verify supplied design eaccc48, all six bundled fonts and comparison captures.
 on:
   push:
     branches: [feat/expo-onjeom]
@@ -58,9 +58,21 @@ jobs:
               await get('apple-touch-icon.png');
               await get('sw.js');
               for (const match of html.matchAll(/<script[^>]+src=["']([^"']+)["']/g)) await get(match[1]);
+              const crypto = require('node:crypto');
+              const fontSources = JSON.parse(fs.readFileSync('assets/fonts/sources.json', 'utf8')).filter(file => /\.(ttf|otf)$/.test(file.file));
+              const deployedFonts = (await github.request('GET /repos/{owner}/{repo}/contents/{path}', { owner, repo, path: 'assets/fonts', ref: expected })).data;
+              if (fontSources.length !== 6) throw Error('Expected six bundled font files');
+              for (const font of fontSources) {
+                const [name, extension] = font.file.split('.');
+                const deployed = deployedFonts.find(file => file.name.startsWith(name + '.') && file.name.endsWith('.' + extension));
+                if (!deployed) throw Error('Bundled font missing from deployment');
+                const bytes = Buffer.from(await (await get(deployed.path)).arrayBuffer());
+                if (crypto.createHash('sha256').update(bytes).digest('hex') !== font.sha256) throw Error('Public font differs from bundled original');
+              }
+              result.verifiedFonts = fontSources.length;
               const review = await (await get('review/')).text();
               if (!review.includes('온점. 하루를 펼치는 다이어리')) throw Error('UI comparison page is invalid');
-              for (const file of ['01-today.png', '02-writing.png', '03-review.png', '04-one-step.png', '05-garden.png', '06-catalog.png', '07-calendar.png', '08-record-page.png', '09-record-note.png']) {
+              for (const file of ['00-cover.png', '01-today.png', '02-writing.png', '03-review.png', '04-one-step.png', '05-garden.png', '06-catalog.png', '07-calendar.png', '08-record-page.png', '09-record-note.png', 'pre-spec-today.png']) {
                 const screenshot = await get('review/screenshots/' + file);
                 if (!screenshot.headers.get('content-type')?.startsWith('image/png')) throw Error('UI screenshot MIME type is invalid');
               }
